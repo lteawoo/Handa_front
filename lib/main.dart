@@ -55,24 +55,40 @@ class TodoItemWidget extends StatefulWidget {
 class _TodoItemState extends State<TodoItemWidget> {
   @override
   Widget build(BuildContext context) {
-    return new Card(
-      child: new Container(
-        padding: new EdgeInsets.all(5.0),
-        child: new Column(
-          children: <Widget>[
-            new CheckboxListTile(
-              value: widget.done,
-              title: new Text(widget.content),
-              controlAffinity: ListTileControlAffinity.leading,
-              onChanged: (bool val) {
-                setState(() {
-                  widget.done = val;
-                });
-              },
+    Card card = new Card(
+        child: new Container(
+            padding: new EdgeInsets.all(5.0),
+            child: new Column(
+              children: <Widget>[
+                new CheckboxListTile(
+                  value: widget.done,
+                  title: new Text(widget.content),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (bool val) {
+                    setState(() {
+                      widget.done = val;
+                    });
+                  },
+                )
+              ],
             )
-          ],
         )
-      )
+    );
+
+    return new LongPressDraggable(
+      child: card,
+      childWhenDragging: Opacity(
+        opacity: 0.5,
+        child: card,
+      ),
+      feedback: Material(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width
+          ),
+          child: card,
+        ),
+      ),
     );
   }
 }
@@ -89,7 +105,6 @@ class TodoItemListWidget extends StatefulWidget {
 }
 
 class _TodoItemListState extends State<TodoItemListWidget> {
-
   @override
   Widget build(BuildContext context) {
     return new ListView.builder(
