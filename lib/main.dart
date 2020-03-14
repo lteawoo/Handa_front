@@ -6,20 +6,6 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-/*    List<TodoItemWidget> list = [];
-
-    list.add(new TodoItemWidget(
-      id: 1,
-      content: '딸기를 먹자',
-      done: false,
-    ));
-
-    list.add(new TodoItemWidget(
-      id: 2,
-      content: '바나나를 먹자',
-      done: true,
-    ));*/
-
     List<TodoItem> list = [];
 
     list.add(new TodoItem(
@@ -33,8 +19,6 @@ class MyApp extends StatelessWidget {
       content: '바나나를 먹자',
       done: true,
     ));
-
-
 
     debugPrint('list size: ' + list.length.toString());
 
@@ -54,66 +38,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class TodoItemWidget extends StatefulWidget {
-  final int id;
-  String content;
-  bool done;
 
-  TodoItemWidget({
-    Key key,
-    this.id,
-    this.content,
-    this.done
-  }): super(key: key);
-
-  @override
-  _TodoItemState createState() => _TodoItemState();
-}
-
-class _TodoItemState extends State<TodoItemWidget> {
-  @override
-  Widget build(BuildContext context) {
-    Card card = new Card(
-        child: new Container(
-            padding: new EdgeInsets.all(5.0),
-            child: new Column(
-              children: <Widget>[
-                new CheckboxListTile(
-                  value: widget.done,
-                  title: new Text(widget.content),
-                  controlAffinity: ListTileControlAffinity.leading,
-                  onChanged: (bool val) {
-                    setState(() {
-                      widget.done = val;
-                    });
-                  },
-                )
-              ],
-            )
-        )
-    );
-
-    return new LongPressDraggable(
-      child: card,
-      childWhenDragging: Opacity(
-        opacity: 0.5,
-        child: card,
-      ),
-      feedback: Material(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-              maxWidth: MediaQuery
-                  .of(context)
-                  .size
-                  .width
-          ),
-          child: card,
-        ),
-        elevation: 4.0,
-      ),
-    );
-  }
-}
 
 class TodoItemListWidget extends StatefulWidget {
   final List<TodoItem> items;
@@ -126,6 +51,84 @@ class TodoItemListWidget extends StatefulWidget {
   _TodoItemListState createState() => _TodoItemListState();
 }
 
+class _TodoItemListState extends State<TodoItemListWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return ReorderableListView(
+      children: [
+        for (final item in widget.items)
+          Card(
+            key: ValueKey(item.no),
+            child: new Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                new CheckboxListTile(
+                  title: new Text(item.content),
+                  value: item.done,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (bool val) {
+                    setState(() {
+                      item.done = val;
+                    });
+                  },
+                ),
+              ],
+            )
+          )
+      ],
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          debugPrint('oldIndex : ' + oldIndex.toString() + ' nexIndex : ' + newIndex.toString());
+          TodoItem item = widget.items[oldIndex];
+          for(TodoItem item in widget.items) {
+            debugPrint(item.content);
+          }
+          widget.items.removeAt(oldIndex);
+          widget.items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
+        });
+      }
+    );
+  }
+}
+
+/*class _TodoItemListState extends State<TodoItemListWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return new DragAndDropList<TodoItem>(
+      widget.items,
+      itemBuilder: (BuildContext context, item) {
+        return Card(
+          child: new Container(
+            padding: new EdgeInsets.all(5.0),
+            child: new Column(
+              children: <Widget>[
+                new CheckboxListTile(
+                  title: new Text(item.content),
+                  value: item.done,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (bool val) {
+                    setState(() {
+                      item.done = val;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      onDragFinish: (before, after) {
+        TodoItem item = widget.items[before];
+        widget.items.removeAt(before);
+        widget.items.insert(after, item);
+      },
+      canBeDraggedTo: (one, two) => true,
+      dragElevation: 8.0,
+    );
+  }
+}*/
+
+/*
 class _TodoItemListState extends State<TodoItemListWidget> with TickerProviderStateMixin {
   Widget buildRow(int index) {
     final TodoItem item = widget.items[index];
@@ -136,7 +139,12 @@ class _TodoItemListState extends State<TodoItemListWidget> with TickerProviderSt
             child: new Column(
               children: <Widget>[
                 new CheckboxListTile(
-                  title: new Text(item.content),
+                  title: Column(
+                    children: <Widget>[
+                      new Text(item.content),
+                      new Text(index.toString()),
+                    ],
+                  ),
                   value: item.done,
                   controlAffinity: ListTileControlAffinity.leading,
                   onChanged: (bool val) {
@@ -175,9 +183,11 @@ class _TodoItemListState extends State<TodoItemListWidget> with TickerProviderSt
 
     return DragTarget<TodoItem>(
       onWillAccept: (item) {
+        debugPrint("onwillaccept, index " + index.toString() + " item " + item.content.toString() + " yes? " + (widget.items.indexOf(item) != index).toString());
         return widget.items.indexOf(item) != index;
       },
       onAccept: (item) {
+        debugPrint("onAccept, index " + index.toString() + " item " + item.toString());
         setState(() {
           int currentIndex = widget.items.indexOf(item);
 
@@ -191,7 +201,7 @@ class _TodoItemListState extends State<TodoItemListWidget> with TickerProviderSt
         return Column(
           children: <Widget>[
             AnimatedSize(
-              duration: Duration(milliseconds: 100),
+              duration: Duration(milliseconds: 300),
               vsync: this,
               child: candidateData.isEmpty ? Container() : Opacity(
                 opacity: 0.0,
@@ -214,7 +224,7 @@ class _TodoItemListState extends State<TodoItemListWidget> with TickerProviderSt
       itemBuilder: (context, index) => buildRow(index),
     );
   }
-}
+}*/
 
 class TodoItem {
   int no;
