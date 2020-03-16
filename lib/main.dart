@@ -4,6 +4,15 @@ import 'package:flutter/foundation.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
+  void _showModalBottomSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        return _BottomSheetContent();
+      }
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     List<TodoItem> list = [];
@@ -52,17 +61,14 @@ class MyApp extends StatelessWidget {
             items: list,
           )
         ),
-        floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.add),
-          onPressed: () {
-            showModalBottomSheet<void>(
-              context: context,
-              builder: (context) {
-                return _BottomSheetContent();
-              }
-            );
-          },
-        )
+        floatingActionButton: Builder(
+          builder: (context) => FloatingActionButton(
+            child: Icon(Icons.add),
+            onPressed: () {
+              _showModalBottomSheet(context);
+            },
+          ),
+        ),
       )
     );
   }
@@ -120,10 +126,9 @@ class _BottomSheetContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 200.0,
+      height: 200,
       child: Column(
         children: <Widget>[
-          Text('modal'),
         ],
       )
     );
