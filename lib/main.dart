@@ -19,6 +19,25 @@ class MyApp extends StatelessWidget {
       content: '바나나를 먹자',
       done: true,
     ));
+    list.add(new TodoItem(
+      no: 3,
+      content: '바나나를 먹자',
+      done: true,
+    ));
+    list.add(new TodoItem(
+      no: 4,
+      content: '바나나를 먹자',
+      done: true,
+    ));
+    list.add(new TodoItem(
+      no: 5,
+      content: '바나나를 먹자',
+      done: true,
+    ));    list.add(new TodoItem(
+      no: 6,
+      content: '바나나를 먹자',
+      done: true,
+    ));
 
     debugPrint('list size: ' + list.length.toString());
 
@@ -33,12 +52,21 @@ class MyApp extends StatelessWidget {
             items: list,
           )
         ),
+        floatingActionButton: FloatingActionButton(
+          child: const Icon(Icons.add),
+          onPressed: () {
+            showModalBottomSheet<void>(
+              context: context,
+              builder: (context) {
+                return _BottomSheetContent();
+              }
+            );
+          },
+        )
       )
     );
   }
 }
-
-
 
 class TodoItemListWidget extends StatefulWidget {
   final List<TodoItem> items;
@@ -59,21 +87,18 @@ class _TodoItemListState extends State<TodoItemListWidget> {
         for (final item in widget.items)
           Card(
             key: ValueKey(item.no),
-            child: new Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                new CheckboxListTile(
-                  title: new Text(item.content),
-                  value: item.done,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  onChanged: (bool val) {
-                    setState(() {
-                      item.done = val;
-                    });
-                  },
-                ),
-              ],
-            )
+            child: StatefulBuilder(builder: (context, setState) {
+              return new CheckboxListTile(
+                title: new Text(item.content),
+                value: item.done,
+                controlAffinity: ListTileControlAffinity.leading,
+                onChanged: (bool val) {
+                  setState(() {
+                    item.done = val;
+                  });
+                },
+              );
+            }),
           )
       ],
       onReorder: (oldIndex, newIndex) {
@@ -87,6 +112,20 @@ class _TodoItemListState extends State<TodoItemListWidget> {
           widget.items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
         });
       }
+    );
+  }
+}
+
+class _BottomSheetContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 200.0,
+      child: Column(
+        children: <Widget>[
+          Text('modal'),
+        ],
+      )
     );
   }
 }
