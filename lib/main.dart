@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
@@ -8,7 +9,37 @@ class MyApp extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       builder: (context) {
-        return _BottomSheetContent();
+        return Container(
+          padding: EdgeInsets.all(8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                autofocus: true,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: '할 일',
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomRight,
+                      child: FlatButton.icon(
+                        textColor: Theme.of(context).primaryColor,//Theme.of(context).textTheme.button.color,
+                        icon: const Icon(Icons.add, size: 18),
+                        label: Text('등록'),
+                        onPressed: () {},
+                      ),
+                    ),
+                  )
+                ],
+              )
+            ],
+          ),
+        );
       }
     );
   }
@@ -118,19 +149,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
           widget.items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
         });
       }
-    );
-  }
-}
-
-class _BottomSheetContent extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 200,
-      child: Column(
-        children: <Widget>[
-        ],
-      )
     );
   }
 }
