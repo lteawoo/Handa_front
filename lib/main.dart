@@ -4,8 +4,24 @@ import 'package:flutter/foundation.dart';
 
 void main() => runApp(MyApp());
 
+class TodoItem {
+  int no;
+  String content;
+  bool done;
+
+  TodoItem({
+    this.no,
+    this.content,
+    this.done,
+  });
+}
+
 class MyApp extends StatelessWidget {
   void _showModalBottomSheet(BuildContext context) {
+    TodoItem item = TodoItem();
+    /*
+     * TODO TextField 이벤트 처리 1.입력 후 엔터, 2.입력 후 모달 닫음, 3.입력 후 등록버튼 클릭
+     */
     showModalBottomSheet<void>(
       context: context,
       builder: (context) {
@@ -20,6 +36,13 @@ class MyApp extends StatelessWidget {
                   border: OutlineInputBorder(),
                   labelText: '할 일',
                 ),
+                onSubmitted: (String value) async {
+                  if(value == '') {
+                    return;
+                  }
+                  debugPrint('you typed $value');
+                  item.content = value;
+                },
               ),
               Row(
                 mainAxisSize: MainAxisSize.max,
@@ -31,7 +54,10 @@ class MyApp extends StatelessWidget {
                         textColor: Theme.of(context).primaryColor,//Theme.of(context).textTheme.button.color,
                         icon: const Icon(Icons.add, size: 18),
                         label: Text('등록'),
-                        onPressed: () {},
+                        onPressed: () {
+                          debugPrint('you typed ${item.content}');
+                          Navigator.pop(context);
+                        },
                       ),
                     ),
                   )
@@ -40,8 +66,11 @@ class MyApp extends StatelessWidget {
             ],
           ),
         );
-      }
-    );
+      },
+    ).whenComplete(() {
+      debugPrint('you typed ${item.content}');
+      debugPrint('닫힘');
+    });
   }
 
   @override
@@ -287,15 +316,3 @@ class _TodoItemListState extends State<TodoItemListWidget> with TickerProviderSt
     );
   }
 }*/
-
-class TodoItem {
-  int no;
-  String content;
-  bool done;
-
-  TodoItem({
-    this.no,
-    this.content,
-    this.done,
-  });
-}
