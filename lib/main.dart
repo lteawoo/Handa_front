@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 void main() => runApp(MyApp());
 
@@ -20,11 +21,17 @@ class MyApp extends StatelessWidget {
   void _showModalBottomSheet(BuildContext context) {
     TextEditingController _controller = TextEditingController();
 
+    submit() {
+      final String input = _controller.text;
+      debugPrint('submit, you typed $input');
+    }
+
     /*
-     * TODO TextField 이벤트 처리 1.입력 후 엔터, 2.입력 후 모달 닫음, 3.입력 후 등록버튼 클릭
+     * TODO TextField 이벤트 처리 1.입력 후 엔터, 2.입력 후 모달 닫음(드래그로 닫아도 해당됨), 3.입력 후 등록버튼 클릭
+     * TODO 줄내림해야함. textfield가 아닌건가..
      */
     showModalBottomSheet<void>(
-      enableDrag: false,
+      enableDrag: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
@@ -38,18 +45,53 @@ class MyApp extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                TextField(
-                  controller: _controller,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: '할 일',
-                  ),
-                  onSubmitted: (String value) async {
-                    if(value == '') {
-                      return;
+                RawKeyboardListener(
+                  focusNode: FocusNode(),
+                  onKey: (event) {
+                    if(event is RawKeyUpEvent) {
+                      debugPrint(event.data.keyLabel);
+                      if(event.logicalKey == LogicalKeyboardKey.enter) {
+                        submit();
+                      } else if (event.data is RawKeyEventDataWeb) {
+                        final data = event.data as RawKeyEventDataWeb;
+                        if (data.keyLabel == 'Enter') {
+                          submit();
+                        }
+                      } else if (event.data is RawKeyEventDataAndroid) {
+                        final data = event.data as RawKeyEventDataAndroid;
+                        if (data.keyCode == 13) {
+                          submit();
+                        }
+                      }
                     }
-                    debugPrint('you typed $value');
                   },
+                  child: TextField(
+                    textInputAction: TextInputAction.done,
+                    autofocus: true,
+                    minLines: 1,
+                    maxLines: 3,
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: '123',
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: (String value) async {
+                      if(value == '') {
+                        return;
+                      }
+                      debugPrint('you typed $value');
+                      Navigator.pop(context);
+                    },
+        /*                  onChanged: (String value) async {
+                              *//*for(int i in value.codeUnits) {
+                                debugPrint('typed : ' + i.toString());
+                              }*//*
+                              if(value.contains('\n')) {
+                                debugPrint('typed : enter');
+        //                        Navigator.pop(context);
+                              }
+                          },*/
+                  ),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.max,
@@ -65,7 +107,7 @@ class MyApp extends StatelessWidget {
                             if(_controller.value.toString() == '') {
                               return;
                             }
-                            debugPrint('you typed ${_controller.value.toString()}');
+                            debugPrint('you typed ${_controller.value.text}');
                             Navigator.pop(context);
                           },
                         ),
@@ -82,7 +124,7 @@ class MyApp extends StatelessWidget {
       if(_controller.value.toString() == '') {
         return;
       }
-      debugPrint('you typed ${_controller.value.toString()}');
+      debugPrint('when complete, you typed ${_controller.value.text}');
       debugPrint('닫힘');
     });
   }
@@ -148,6 +190,34 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class TodoItemCard extends StatelessWidget {
+  final TodoItem todoItem;
+
+  const TodoItemCard({
+    Key key,
+    this.todoItem
+  }): super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+   return Card(
+      key: key,
+      child: StatefulBuilder(builder: (context, setState) {
+        return new CheckboxListTile(
+          title: new Text(todoItem.content),
+          value: todoItem.done,
+          controlAffinity: ListTileControlAffinity.leading,
+          onChanged: (bool val) {
+            setState(() {
+              todoItem.done = val;
+            });
+          },
+        );
+      }),
+    );
+  }
+}
+
 class TodoItemListWidget extends StatefulWidget {
   final List<TodoItem> items;
   const TodoItemListWidget({
@@ -165,21 +235,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     return ReorderableListView(
       children: [
         for (final item in widget.items)
-          Card(
-            key: ValueKey(item.no),
-            child: StatefulBuilder(builder: (context, setState) {
-              return new CheckboxListTile(
-                title: new Text(item.content),
-                value: item.done,
-                controlAffinity: ListTileControlAffinity.leading,
-                onChanged: (bool val) {
-                  setState(() {
-                    item.done = val;
-                  });
-                },
-              );
-            }),
-          )
+          TodoItemCard(key: UniqueKey(), todoItem: item)
       ],
       onReorder: (oldIndex, newIndex) {
         setState(() {
