@@ -18,57 +18,71 @@ class TodoItem {
 
 class MyApp extends StatelessWidget {
   void _showModalBottomSheet(BuildContext context) {
-    TodoItem item = TodoItem();
+    TextEditingController _controller = TextEditingController();
+
     /*
      * TODO TextField 이벤트 처리 1.입력 후 엔터, 2.입력 후 모달 닫음, 3.입력 후 등록버튼 클릭
      */
     showModalBottomSheet<void>(
+      enableDrag: false,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      isScrollControlled: true,
       context: context,
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              TextField(
-                autofocus: true,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: '할 일',
+      builder: (BuildContext context) {
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(10.0),
+          child: Container(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: _controller,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: '할 일',
+                  ),
+                  onSubmitted: (String value) async {
+                    if(value == '') {
+                      return;
+                    }
+                    debugPrint('you typed $value');
+                  },
                 ),
-                onSubmitted: (String value) async {
-                  if(value == '') {
-                    return;
-                  }
-                  debugPrint('you typed $value');
-                  item.content = value;
-                },
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                children: <Widget>[
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: FlatButton.icon(
-                        textColor: Theme.of(context).primaryColor,//Theme.of(context).textTheme.button.color,
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text('등록'),
-                        onPressed: () {
-                          debugPrint('you typed ${item.content}');
-                          Navigator.pop(context);
-                        },
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.bottomRight,
+                        child: FlatButton.icon(
+                          textColor: Theme.of(context).primaryColor,//Theme.of(context).textTheme.button.color,
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text('등록'),
+                          onPressed: () {
+                            if(_controller.value.toString() == '') {
+                              return;
+                            }
+                            debugPrint('you typed ${_controller.value.toString()}');
+                            Navigator.pop(context);
+                          },
+                        ),
                       ),
-                    ),
-                  )
-                ],
-              )
-            ],
-          ),
+                    )
+                  ],
+                )
+              ],
+            ),
+          )
         );
       },
     ).whenComplete(() {
-      debugPrint('you typed ${item.content}');
+      if(_controller.value.toString() == '') {
+        return;
+      }
+      debugPrint('you typed ${_controller.value.toString()}');
       debugPrint('닫힘');
     });
   }
@@ -181,138 +195,3 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     );
   }
 }
-
-/*class _TodoItemListState extends State<TodoItemListWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return new DragAndDropList<TodoItem>(
-      widget.items,
-      itemBuilder: (BuildContext context, item) {
-        return Card(
-          child: new Container(
-            padding: new EdgeInsets.all(5.0),
-            child: new Column(
-              children: <Widget>[
-                new CheckboxListTile(
-                  title: new Text(item.content),
-                  value: item.done,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  onChanged: (bool val) {
-                    setState(() {
-                      item.done = val;
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-      onDragFinish: (before, after) {
-        TodoItem item = widget.items[before];
-        widget.items.removeAt(before);
-        widget.items.insert(after, item);
-      },
-      canBeDraggedTo: (one, two) => true,
-      dragElevation: 8.0,
-    );
-  }
-}*/
-
-/*
-class _TodoItemListState extends State<TodoItemListWidget> with TickerProviderStateMixin {
-  Widget buildRow(int index) {
-    final TodoItem item = widget.items[index];
-
-    Card card = new Card(
-        child: new Container(
-            padding: new EdgeInsets.all(5.0),
-            child: new Column(
-              children: <Widget>[
-                new CheckboxListTile(
-                  title: Column(
-                    children: <Widget>[
-                      new Text(item.content),
-                      new Text(index.toString()),
-                    ],
-                  ),
-                  value: item.done,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  onChanged: (bool val) {
-                    setState(() {
-                      item.done = val;
-                    });
-                  },
-                )
-              ],
-            )
-        )
-    );
-
-    Draggable draggable = new LongPressDraggable<TodoItem>(
-      data: item,
-      axis: Axis.vertical,
-      maxSimultaneousDrags: 1,
-      child: card,
-      childWhenDragging: Opacity(
-        opacity: 0.5,
-        child: card,
-      ),
-      feedback: Material(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-              maxWidth: MediaQuery
-                  .of(context)
-                  .size
-                  .width
-          ),
-          child: card,
-        ),
-        elevation: 4.0,
-      ),
-    );
-
-    return DragTarget<TodoItem>(
-      onWillAccept: (item) {
-        debugPrint("onwillaccept, index " + index.toString() + " item " + item.content.toString() + " yes? " + (widget.items.indexOf(item) != index).toString());
-        return widget.items.indexOf(item) != index;
-      },
-      onAccept: (item) {
-        debugPrint("onAccept, index " + index.toString() + " item " + item.toString());
-        setState(() {
-          int currentIndex = widget.items.indexOf(item);
-
-          debugPrint(currentIndex.toString());
-
-          widget.items.remove(item);
-          widget.items.insert(currentIndex > index ? index : index - 1, item);
-        });
-      },
-      builder: (BuildContext buildContext, List<TodoItem> candidateData, List<dynamic> rejectedData) {
-        return Column(
-          children: <Widget>[
-            AnimatedSize(
-              duration: Duration(milliseconds: 300),
-              vsync: this,
-              child: candidateData.isEmpty ? Container() : Opacity(
-                opacity: 0.0,
-                child: card,
-              ),
-            ),
-            Container(
-              child: candidateData.isEmpty ? draggable : card,
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return new ListView.builder(
-      itemCount: widget.items.length,
-      itemBuilder: (context, index) => buildRow(index),
-    );
-  }
-}*/
