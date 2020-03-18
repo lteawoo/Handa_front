@@ -148,6 +148,34 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class TodoItemCard extends StatelessWidget {
+  final TodoItem todoItem;
+
+  const TodoItemCard({
+    Key key,
+    this.todoItem
+  }): super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+   return Card(
+      key: key,
+      child: StatefulBuilder(builder: (context, setState) {
+        return new CheckboxListTile(
+          title: new Text(todoItem.content),
+          value: todoItem.done,
+          controlAffinity: ListTileControlAffinity.leading,
+          onChanged: (bool val) {
+            setState(() {
+              todoItem.done = val;
+            });
+          },
+        );
+      }),
+    );
+  }
+}
+
 class TodoItemListWidget extends StatefulWidget {
   final List<TodoItem> items;
   const TodoItemListWidget({
@@ -165,21 +193,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     return ReorderableListView(
       children: [
         for (final item in widget.items)
-          Card(
-            key: ValueKey(item.no),
-            child: StatefulBuilder(builder: (context, setState) {
-              return new CheckboxListTile(
-                title: new Text(item.content),
-                value: item.done,
-                controlAffinity: ListTileControlAffinity.leading,
-                onChanged: (bool val) {
-                  setState(() {
-                    item.done = val;
-                  });
-                },
-              );
-            }),
-          )
+          TodoItemCard(key: UniqueKey(), todoItem: item)
       ],
       onReorder: (oldIndex, newIndex) {
         setState(() {
