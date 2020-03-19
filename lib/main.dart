@@ -21,10 +21,36 @@ class MyApp extends StatelessWidget {
   void _showModalBottomSheet(BuildContext context) {
     TextEditingController _controller = TextEditingController();
 
-    submit() {
+    submit(String where) {
       final String input = _controller.text;
-      debugPrint('submit, you typed $input');
+      debugPrint('$where, request submit, you typed $input');
+      if(input == '') {
+        return;
+      }
+      debugPrint('submitted, you typed $input');
     }
+
+ /*   FocusNode _focusNode = FocusNode(
+        onKey: (node, RawKeyEvent event) {
+          debugPrint('submit, you typed $node, $event');
+          if(event is RawKeyUpEvent) {
+            if(event.logicalKey == LogicalKeyboardKey.enter) {
+              submit();
+            } else if (event.data is RawKeyEventDataWeb) {
+              final data = event.data as RawKeyEventDataWeb;
+              if (data.keyLabel == 'Enter') {
+                submit();
+              }
+            } else if (event.data is RawKeyEventDataAndroid) {
+              final data = event.data as RawKeyEventDataAndroid;
+              if (data.keyCode == 13) {
+                submit();
+              }
+            }
+          }
+          return true;
+        },
+    );*/
 
     /*
      * TODO TextField 이벤트 처리 1.입력 후 엔터, 2.입력 후 모달 닫음(드래그로 닫아도 해당됨), 3.입력 후 등록버튼 클릭
@@ -45,53 +71,21 @@ class MyApp extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                RawKeyboardListener(
-                  focusNode: FocusNode(),
-                  onKey: (event) {
-                    if(event is RawKeyUpEvent) {
-                      debugPrint(event.data.keyLabel);
-                      if(event.logicalKey == LogicalKeyboardKey.enter) {
-                        submit();
-                      } else if (event.data is RawKeyEventDataWeb) {
-                        final data = event.data as RawKeyEventDataWeb;
-                        if (data.keyLabel == 'Enter') {
-                          submit();
-                        }
-                      } else if (event.data is RawKeyEventDataAndroid) {
-                        final data = event.data as RawKeyEventDataAndroid;
-                        if (data.keyCode == 13) {
-                          submit();
-                        }
-                      }
-                    }
-                  },
-                  child: TextField(
-                    textInputAction: TextInputAction.done,
-                    autofocus: true,
-                    minLines: 1,
-                    maxLines: 3,
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: '123',
-                      border: InputBorder.none,
-                    ),
-                    onSubmitted: (String value) async {
-                      if(value == '') {
-                        return;
-                      }
-                      debugPrint('you typed $value');
-                      Navigator.pop(context);
-                    },
-        /*                  onChanged: (String value) async {
-                              *//*for(int i in value.codeUnits) {
-                                debugPrint('typed : ' + i.toString());
-                              }*//*
-                              if(value.contains('\n')) {
-                                debugPrint('typed : enter');
-        //                        Navigator.pop(context);
-                              }
-                          },*/
+                TextField(
+                  //focusNode: _focusNode,
+                  textInputAction: TextInputAction.done,
+                  autofocus: true,
+                  minLines: 1,
+                  maxLines: 3,
+                  controller: _controller,
+                  decoration: InputDecoration(
+                    hintText: '123',
+                    border: InputBorder.none,
                   ),
+                  onSubmitted: (String value) async {
+                    submit('onSubmitted');
+                    //Navigator.pop(context);
+                  },
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.max,
@@ -104,10 +98,7 @@ class MyApp extends StatelessWidget {
                           icon: const Icon(Icons.add, size: 18),
                           label: Text('등록'),
                           onPressed: () {
-                            if(_controller.value.toString() == '') {
-                              return;
-                            }
-                            debugPrint('you typed ${_controller.value.text}');
+                            submit('onPressed');
                             Navigator.pop(context);
                           },
                         ),
@@ -121,10 +112,10 @@ class MyApp extends StatelessWidget {
         );
       },
     ).whenComplete(() {
-      if(_controller.value.toString() == '') {
+     /* if(_controller.value.toString() == '') {
         return;
       }
-      debugPrint('when complete, you typed ${_controller.value.text}');
+      debugPrint('when complete, you typed ${_controller.value.text}');*/
       debugPrint('닫힘');
     });
   }
