@@ -22,15 +22,17 @@ class MyApp extends StatelessWidget {
     TextEditingController _controller = TextEditingController();
 
     submit(String where) {
-      final String input = _controller.text;
+      final String input = _controller.text.trim();
       debugPrint('$where, request submit, you typed $input');
+
       if(input == '') {
+        debugPrint('$where, you typed blank pass');
         return;
       }
       debugPrint('submitted, you typed $input');
     }
 
- /*   FocusNode _focusNode = FocusNode(
+    /*FocusNode _focusNode = FocusNode(
         onKey: (node, RawKeyEvent event) {
           debugPrint('submit, you typed $node, $event');
           if(event is RawKeyUpEvent) {
@@ -52,10 +54,6 @@ class MyApp extends StatelessWidget {
         },
     );*/
 
-    /*
-     * TODO TextField 이벤트 처리 1.입력 후 엔터, 2.입력 후 모달 닫음(드래그로 닫아도 해당됨), 3.입력 후 등록버튼 클릭
-     * TODO 줄내림해야함. textfield가 아닌건가..
-     */
     showModalBottomSheet<void>(
       enableDrag: true,
       shape: RoundedRectangleBorder(
@@ -64,6 +62,7 @@ class MyApp extends StatelessWidget {
       isScrollControlled: true,
       context: context,
       builder: (BuildContext context) {
+        //debugPrint(_isSubmit.toString());
         return SingleChildScrollView(
           padding: EdgeInsets.all(10.0),
           child: Container(
@@ -72,7 +71,6 @@ class MyApp extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 TextField(
-                  //focusNode: _focusNode,
                   textInputAction: TextInputAction.done,
                   autofocus: true,
                   minLines: 1,
@@ -82,10 +80,10 @@ class MyApp extends StatelessWidget {
                     hintText: '123',
                     border: InputBorder.none,
                   ),
-                  onSubmitted: (String value) async {
+                  /*onSubmitted: (String value) async {
                     submit('onSubmitted');
                     //Navigator.pop(context);
-                  },
+                  },*/
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.max,
@@ -98,7 +96,7 @@ class MyApp extends StatelessWidget {
                           icon: const Icon(Icons.add, size: 18),
                           label: Text('등록'),
                           onPressed: () {
-                            submit('onPressed');
+                            //submit('onPressed');
                             Navigator.pop(context);
                           },
                         ),
@@ -116,6 +114,7 @@ class MyApp extends StatelessWidget {
         return;
       }
       debugPrint('when complete, you typed ${_controller.value.text}');*/
+      submit('close');
       debugPrint('닫힘');
     });
   }
