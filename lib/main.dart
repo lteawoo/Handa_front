@@ -29,6 +29,10 @@ class MyApp extends StatelessWidget {
         debugPrint('$where, you typed blank pass');
         return;
       }
+
+      TodoItem newItem = new TodoItem(content: input, done: false);
+
+
       debugPrint('submitted, you typed $input');
     }
 
@@ -110,8 +114,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<TodoItem> list = [];
-
+    final List<TodoItem> list = [];
     list.add(new TodoItem(
       no: 1,
       content: '딸기를 먹자',
@@ -209,6 +212,13 @@ class TodoItemListWidget extends StatefulWidget {
 }
 
 class _TodoItemListState extends State<TodoItemListWidget> {
+
+  void _addTodoItem(TodoItem todoItem) {
+    setState(() {
+      widget.items.add(todoItem);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return ReorderableListView(
