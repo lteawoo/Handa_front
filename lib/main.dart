@@ -62,7 +62,6 @@ class MyApp extends StatelessWidget {
       isScrollControlled: true,
       context: context,
       builder: (BuildContext context) {
-        //debugPrint(_isSubmit.toString());
         return SingleChildScrollView(
           padding: EdgeInsets.all(10.0),
           child: Container(
@@ -77,13 +76,9 @@ class MyApp extends StatelessWidget {
                   maxLines: 3,
                   controller: _controller,
                   decoration: InputDecoration(
-                    hintText: '123',
+                    hintText: '무엇을 할건가요?',
                     border: InputBorder.none,
                   ),
-                  /*onSubmitted: (String value) async {
-                    submit('onSubmitted');
-                    //Navigator.pop(context);
-                  },*/
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.max,
@@ -96,7 +91,6 @@ class MyApp extends StatelessWidget {
                           icon: const Icon(Icons.add, size: 18),
                           label: Text('등록'),
                           onPressed: () {
-                            //submit('onPressed');
                             Navigator.pop(context);
                           },
                         ),
@@ -110,12 +104,7 @@ class MyApp extends StatelessWidget {
         );
       },
     ).whenComplete(() {
-     /* if(_controller.value.toString() == '') {
-        return;
-      }
-      debugPrint('when complete, you typed ${_controller.value.text}');*/
       submit('close');
-      debugPrint('닫힘');
     });
   }
 
