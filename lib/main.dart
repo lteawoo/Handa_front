@@ -88,28 +88,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
       debugPrint('submitted, you typed $input');
     }
 
-    /*FocusNode _focusNode = FocusNode(
-        onKey: (node, RawKeyEvent event) {
-          debugPrint('submit, you typed $node, $event');
-          if(event is RawKeyUpEvent) {
-            if(event.logicalKey == LogicalKeyboardKey.enter) {
-              submit();
-            } else if (event.data is RawKeyEventDataWeb) {
-              final data = event.data as RawKeyEventDataWeb;
-              if (data.keyLabel == 'Enter') {
-                submit();
-              }
-            } else if (event.data is RawKeyEventDataAndroid) {
-              final data = event.data as RawKeyEventDataAndroid;
-              if (data.keyCode == 13) {
-                submit();
-              }
-            }
-          }
-          return true;
-        },
-    );*/
-
     showModalBottomSheet<void>(
       enableDrag: true,
       shape: RoundedRectangleBorder(
