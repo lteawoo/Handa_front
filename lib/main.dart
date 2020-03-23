@@ -38,7 +38,7 @@ class Member {
     this.password,
   });
 
-  Map<String, dynamic> toJson() =>
+  Map<String, Map<String, dynamic>> toJson() =>
       {
         'email': {
          'value': email,
@@ -57,14 +57,47 @@ class MyApp extends StatelessWidget {
 
     Member member = new Member(email: username, password: password);
     debugPrint(member.toJson().toString());
-    final response = await http.post(
-      'http://localhost:8080/member/signin',
-      body: member.toJson(),
-    ).catchError((error) {
+    debugPrint('json : ' + jsonEncode(<String, dynamic>{
+      'email': {
+       'value': username,
+      },
+       'password': {
+        'value': password,
+      }}));
+//    final response = await http.post(
+//      'http://localhost:8080/member/signin',
+//      headers: {
+//        'Content-Type': 'application/json; charset=UTF-8',
+//        'Accept': '*/*',
+//      },
+//      body: jsonEncode(<String, dynamic>{
+//        'email': {
+//          'value': username,
+//        },
+//        'password': {
+//          'value': password,
+//        },
+//      }),
+//    ).then((value) {
+//      debugPrint(value.body);
+//    }).catchError((error) {
+//      debugPrint(error.toString());
+//    });
+
+    final response = await http.get(
+      'http://localhost:8080/member/test',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST,GET,DELETE,PUT,OPTIONS',
+        'Host': 'localhost:8080',
+      }
+    ).then((value) {
+      debugPrint(value.toString());
+    }).catchError((error) {
       debugPrint(error.toString());
     });
 
-    debugPrint(response.body);
+    debugPrint('result : ' + response.body);
     /*final response = await http.get(
       'http://localhost:8080/api/item/list',
       *//*headers: {
