@@ -148,6 +148,12 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     });
   }
 
+  void _deleteTodoItem(TodoItem todoItem) {
+    setState(() {
+      widget.items.remove(todoItem);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -175,6 +181,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                         onPressed: () {
                           setState(() {
                             debugPrint("delete");
+                            _deleteTodoItem(item);
                           });
                         },
                       )
