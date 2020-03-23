@@ -176,11 +176,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
             ],
             onReorder: (oldIndex, newIndex) {
               setState(() {
-                debugPrint('oldIndex : ' + oldIndex.toString() + ' nexIndex : ' + newIndex.toString());
                 TodoItem item = widget.items[oldIndex];
-                for(TodoItem item in widget.items) {
-                  debugPrint(item.content);
-                }
                 widget.items.removeAt(oldIndex);
                 widget.items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
               });
