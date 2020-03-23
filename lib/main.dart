@@ -170,6 +170,14 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                           item.done = val;
                         });
                       },
+                      secondary: IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          setState(() {
+                            debugPrint("delete");
+                          });
+                        },
+                      )
                     );
                   }),
                 )
