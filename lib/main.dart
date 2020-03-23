@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
 
@@ -15,11 +19,74 @@ class TodoItem {
     this.content,
     this.done,
   });
+
+  factory TodoItem.fromJson(Map<String, dynamic> json) {
+    return TodoItem(
+      no: json['no'],
+      content: json['content'],
+      done: json['done'],
+    );
+  }
+}
+
+class Member {
+  String email;
+  String password;
+
+  Member({
+    this.email,
+    this.password,
+  });
+
+  Map<String, dynamic> toJson() =>
+      {
+        'email': {
+         'value': email,
+        },
+        'password': {
+         'value': password,
+        },
+      };
 }
 
 class MyApp extends StatelessWidget {
+  Future<List<TodoItem>> fetchItem() async {
+    String username = 'test@taeu.kr';
+    String password = '12345';
+    String header = base64Encode(utf8.encode('$username:$password'));
+
+    Member member = new Member(email: username, password: password);
+    debugPrint(member.toJson().toString());
+    final response = await http.post(
+      'http://localhost:8080/member/signin',
+      body: member.toJson(),
+    ).catchError((error) {
+      debugPrint(error.toString());
+    });
+
+    debugPrint(response.body);
+    /*final response = await http.get(
+      'http://localhost:8080/api/item/list',
+      *//*headers: {
+        HttpHeaders.authorizationHeader: 'Basic ' + header
+      }*//*
+    ).catchError((error) {
+      debugPrint(error.toString());
+      return error;
+    });*/
+
+    List list = [];
+
+    final responseJson = json.decode(response.body);
+    list = responseJson;
+
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
+    fetchItem();
+
     final List<TodoItem> list = [];
     list.add(new TodoItem(
       no: 1,
