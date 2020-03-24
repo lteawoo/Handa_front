@@ -260,7 +260,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
 
   Future<Member> signin() async {
     String username = 'test@taeu.kr';
-    String password = '12345';
+    String password = '123415';
     String header = base64Encode(utf8.encode('$username:$password'));
 
     Member member = new Member(email: username, password: password);
@@ -269,7 +269,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     final response = await http.post(
       'http://localhost:8080/member/signin',
       headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json; charset=UTF-8'
       },
       body: jsonEncode(member),
     ).catchError((error) {
@@ -278,9 +278,8 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     debugPrint(response.body);
     Map<String, String> temp = response.headers;
     for(String s in temp.keys) {
-      debugPrint(s);
+      debugPrint(s + ": " + temp[s]);
     }
-    debugPrint(temp.toString());
   }
 
   Future<List<TodoItem>> fetchItems() async {
