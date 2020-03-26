@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(MyApp());
 class TodoItem {
@@ -222,9 +222,15 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                         },
                       ),*/
                       FlatButton(
-                        child: Text('로그인'),
+                        child: Text('accesstoken'),
                         onPressed: () {
-                          signin();
+                          getAccessToken();
+                        },
+                      ),
+                      FlatButton(
+                        child: Text('checktoken'),
+                        onPressed: () {
+                          checkToken();
                         },
                       ),
                       FlatButton(
@@ -258,7 +264,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     });
   }
 
-  /*Future<Member> signin() async {
+  Future<Member> signin() async {
     String username = 'test@taeu.kr';
     String password = '123415';
     String header = base64Encode(utf8.encode('$username:$password'));
@@ -280,9 +286,10 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     for(String s in temp.keys) {
       debugPrint(s + ": " + temp[s]);
     }
-  }*/
+  }
 
-  Future<Member> signin() async {
+  void getAccessToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     String username = 'test@taeu.kr';
     String password = '12345';
     String uri = "http://localhost:8080/oauth/token?grant_type=password&username=$username&password=$password";
@@ -302,11 +309,29 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     });
 
     debugPrint(response.body);
+    Map responseMap = jsonDecode(response.body);
+    prefs.setString('access_token', responseMap['access_token']);
+  }
 
-    Map<String, String> temp = response.headers;
-    for(String s in temp.keys) {
-      debugPrint(s + ": " + temp[s]);
-    }
+  void checkToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('access_token');
+    String clientId = "taeu_client";
+    String clientPw = "taeu_secret";
+    String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
+    String uri = 'http://localhost:8080/oauth/check_token?token=$token';
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': authorization,
+      },
+    ).catchError((error) {
+      debugPrint(error.toString());
+      throw error;
+    });
+
+    debugPrint(response.body);
   }
 
   Future<List<TodoItem>> fetchItems() async {
