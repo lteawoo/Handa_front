@@ -258,7 +258,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     });
   }
 
-  Future<Member> signin() async {
+  /*Future<Member> signin() async {
     String username = 'test@taeu.kr';
     String password = '123415';
     String header = base64Encode(utf8.encode('$username:$password'));
@@ -276,6 +276,33 @@ class _TodoItemListState extends State<TodoItemListWidget> {
       throw error;
     });
     debugPrint(response.body);
+    Map<String, String> temp = response.headers;
+    for(String s in temp.keys) {
+      debugPrint(s + ": " + temp[s]);
+    }
+  }*/
+
+  Future<Member> signin() async {
+    String username = 'test@taeu.kr';
+    String password = '12345';
+    String uri = "http://localhost:8080/oauth/token?grant_type=password&username=$username&password=$password";
+    String clientId = "taeu_client";
+    String clientPw = "taeu_secret";
+    String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
+    debugPrint(authorization);
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': authorization,
+      },
+    ).catchError((error) {
+      debugPrint(error.toString());
+      throw error;
+    });
+
+    debugPrint(response.body);
+
     Map<String, String> temp = response.headers;
     for(String s in temp.keys) {
       debugPrint(s + ": " + temp[s]);
