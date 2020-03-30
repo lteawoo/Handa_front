@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:handa/layout/adaptive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -25,76 +26,26 @@ class Member {
       };
 }
 
-class PasswordField extends StatefulWidget {
-  const PasswordField({
-    this.fieldKey,
-    this.hintText,
-    this.labelText,
-    this.helperText,
-    this.onSaved,
-    this.validator,
-    this.onFieldSubmitted,
-  });
-
-  final Key fieldKey;
-  final String hintText;
-  final String labelText;
-  final String helperText;
-  final FormFieldSetter<String> onSaved;
-  final FormFieldSetter<String> validator;
-  final ValueChanged<String> onFieldSubmitted;
-
-  _PasswordFieldState createState() => _PasswordFieldState();
+class SignIn extends StatefulWidget {
+  @override
+  State<SignIn> createState() => _SignInState();
 }
 
-class _PasswordFieldState extends State<PasswordField> {
-  bool _obscureText = true;
-
+class _SignInState extends State<SignIn> {
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      key: widget.fieldKey,
-      obscureText: _obscureText,
-      cursorColor: Theme.of(context).cursorColor,
-      maxLength: 12,
-      onSaved: widget.onSaved,
-      validator: widget.validator,
-      onFieldSubmitted: widget.onFieldSubmitted,
-      decoration: InputDecoration(
-        hintText: widget.hintText,
-        labelText: widget.labelText,
-        helperText: widget.helperText,
-        suffixIcon: GestureDetector(
-          dragStartBehavior: DragStartBehavior.down,
-          onTap: () {
-            setState(() {
-              _obscureText = !_obscureText;
-            });
-          },
-          child: Icon(
-            _obscureText ? Icons.visibility : Icons.visibility_off,
-            semanticLabel: _obscureText ? '보여줌' : '안보여줌',
-          ),
-        ),
-      ),
+    return Scaffold(
+      body: SafeArea(
+        child: _MainView(),
+      )
     );
   }
 }
 
-class SignIn extends StatelessWidget {
-  Member member = Member();
-  bool _autoValidate = false;
-
+class _MainView extends StatelessWidget {
+  final Member member = Member();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  void _handleSubmitted() {
-    final form = _formKey.currentState;
-    if(!form.validate()) {
-      _autoValidate = true;
-    } else {
-      form.save();
-    }
-  }
+  final GlobalKey<_ErrorMsgState> _errorMsgKey = GlobalKey<_ErrorMsgState>();
 
   String _validateEmail(String value) {
     if(value.isEmpty) {
@@ -139,8 +90,9 @@ class SignIn extends StatelessWidget {
       if(response.statusCode == 200) {
         prefs.setString('access_token', responseMap['access_token']);
 
-        Navigator.of(context).pushReplacementNamed('/todo');
+        Navigator.of(context).pushReplacementNamed('/');
       } else {
+        _errorMsgKey.currentState.setErrorMsg(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']);
         debugPrint(responseMap.toString());
       }
     });
@@ -151,67 +103,241 @@ class SignIn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Handa'),
-      ),
-      body: Form(
-        key: _formKey,
-        autovalidate: _autoValidate,
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Column(
-              children: <Widget>[
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                  ),
-                  onSaved: (String value) {
-                    member.email = value;
-                  },
-                  validator: _validateEmail,
-                ),
-                PasswordField(
-                    labelText: 'Password',
-                    validator: _validatePassword,
-                    onSaved: (String value) {
-                      member.password = value;
-                    }
-                ),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: RaisedButton(
-                        child: Text('SIGN IN'),
-                        onPressed: () {
-                          _handleSubmitted();
-                          _signIn(context);
+    final isDesktop = isDisplayDesktop(context);
+    debugPrint(isDesktop.toString());
+    final desktopMaxWidth = 400.0;
+
+    return Column(
+        children: [
+          Expanded(
+              child: Align(
+                alignment: isDesktop ? Alignment.center : Alignment.topCenter,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: <Widget>[
+                      EmailField(
+                        maxWidth: isDesktop ? desktopMaxWidth : null,
+                        labelText: 'Email',
+                        onSaved: (String value) {
+                          member.email = value;
                         },
+                        validator: _validateEmail,
                       ),
-                    ),
-                  ],
-                ),
-                Divider(
-                  thickness: 1.0,
-                ),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: RaisedButton(
+                      PasswordField(
+                          maxWidth: isDesktop ? desktopMaxWidth : null,
+                          labelText: 'Password',
+                          validator: _validatePassword,
+                          onSaved: (String value) {
+                            member.password = value;
+                          }
+                      ),
+                      ErrorMsg(
+                        key: _errorMsgKey,
+                      ),
+                      _LoginButton(
+                          maxWidth: isDesktop ? desktopMaxWidth : null,
+                          onTap: () {
+                            final form = _formKey.currentState;
+                            if(form.validate()) {
+                              form.save();
+                              _signIn(context);
+                            }
+                          }
+                      ),
+                      RaisedButton(
                         child: Text('SIGN UP'),
                         onPressed: () {
                           _signUp(context);
                         },
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ],
+              )
+          ),
+        ]
+    );
+  }
+}
+
+class EmailField extends StatefulWidget {
+  const EmailField({
+    this.fieldKey,
+    this.hintText,
+    this.labelText,
+    this.helperText,
+    this.maxWidth,
+    this.onSaved,
+    this.validator,
+    this.onFieldSubmitted,
+  });
+
+  final Key fieldKey;
+  final String hintText;
+  final String labelText;
+  final String helperText;
+  final double maxWidth;
+  final FormFieldSetter<String> onSaved;
+  final FormFieldSetter<String> validator;
+  final ValueChanged<String> onFieldSubmitted;
+
+  @override
+  State<EmailField> createState() => _EmailFieldState();
+}
+
+class _EmailFieldState extends State<EmailField> {
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        constraints: BoxConstraints(maxWidth: widget.maxWidth ?? double.infinity),
+        child: TextFormField(
+          key: widget.fieldKey,
+          cursorColor: Theme.of(context).cursorColor,
+          onSaved: widget.onSaved,
+          validator: widget.validator,
+          onFieldSubmitted: widget.onFieldSubmitted,
+          decoration: InputDecoration(
+            hintText: widget.hintText,
+            labelText: widget.labelText,
+            helperText: widget.helperText,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PasswordField extends StatefulWidget {
+  const PasswordField({
+    this.fieldKey,
+    this.hintText,
+    this.labelText,
+    this.helperText,
+    this.maxWidth,
+    this.onSaved,
+    this.validator,
+    this.onFieldSubmitted,
+  });
+
+  final Key fieldKey;
+  final String hintText;
+  final String labelText;
+  final String helperText;
+  final double maxWidth;
+  final FormFieldSetter<String> onSaved;
+  final FormFieldSetter<String> validator;
+  final ValueChanged<String> onFieldSubmitted;
+
+  _PasswordFieldState createState() => _PasswordFieldState();
+}
+
+class _PasswordFieldState extends State<PasswordField> {
+  bool _obscureText = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        constraints: BoxConstraints(maxWidth: widget.maxWidth ?? double.infinity),
+        child: TextFormField(
+          key: widget.fieldKey,
+          obscureText: _obscureText,
+          cursorColor: Theme.of(context).cursorColor,
+          onSaved: widget.onSaved,
+          validator: widget.validator,
+          onFieldSubmitted: widget.onFieldSubmitted,
+          decoration: InputDecoration(
+            hintText: widget.hintText,
+            labelText: widget.labelText,
+            helperText: widget.helperText,
+            suffixIcon: GestureDetector(
+              dragStartBehavior: DragStartBehavior.down,
+              onTap: () {
+                setState(() {
+                  _obscureText = !_obscureText;
+                });
+              },
+              child: Icon(
+                _obscureText ? Icons.visibility : Icons.visibility_off,
+                semanticLabel: _obscureText ? '보여줌' : '안보여줌',
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LoginButton extends StatelessWidget {
+  const _LoginButton({
+   Key key,
+   @required this.onTap,
+   this.maxWidth,
+  }) : super(key: key);
+
+  final double maxWidth;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        constraints: BoxConstraints(maxWidth: maxWidth ?? double.infinity),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            FlatButton(
+              color: Theme.of(context).buttonColor,
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              onPressed: onTap,
+              child: Row(
+                children: [
+                  Icon(Icons.lock),
+                  const SizedBox(width: 6),
+                  Text('SIGN IN'),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ErrorMsg extends StatefulWidget {
+  const ErrorMsg({
+    this.key,
+  });
+
+  final Key key;
+
+  @override
+  State<ErrorMsg> createState() => _ErrorMsgState();
+}
+
+class _ErrorMsgState extends State<ErrorMsg> {
+  String errorMsg = '';
+
+  void setErrorMsg(String msg) {
+    setState(() {
+      errorMsg = msg;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      errorMsg,
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:handa/sign_in.dart';
+import 'package:handa/sign_up.dart';
 import 'package:handa/todo.dart';
 
 
@@ -44,12 +45,11 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'Handa',
-      /*home: TodoItemListWidget()*/
-      initialRoute: '/',
+      initialRoute: '/sign_in',
       routes: {
-        '/': (BuildContext context) => SignIn(),
-        '/todo': (BuildContext context) => TodoItemListWidget(items: list),
-        //'/sign_up':
+        '/': (BuildContext context) => TodoItemListWidget(items: list),
+        '/sign_in': (BuildContext context) => SignIn(),
+        '/sign_up': (BuildContext context) => SignUp(),
       }
     );
   }
