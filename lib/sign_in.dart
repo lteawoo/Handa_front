@@ -98,7 +98,7 @@ class _MainView extends StatelessWidget {
     });
   }
   void _signUp(BuildContext context) {
-    Navigator.of(context).pushReplacementNamed('/sign_up');
+    Navigator.of(context).pushNamed('/sign_up');
   }
 
   @override

@@ -42,16 +42,54 @@ class _SignInState extends State<SignUp> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: SafeArea(
-          child: _MainView(),
+          child: MainView(),
         )
     );
   }
 }
 
-class _MainView extends StatelessWidget {
+class MainView extends StatefulWidget {
+  @override
+  State<MainView> createState() => _MainViewState();
+}
+
+class _MainViewState extends State<MainView> {
   final Member member = Member();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final GlobalKey<_ErrorMsgState> _errorMsgKey = GlobalKey<_ErrorMsgState>();
+  final GlobalKey<FormFieldState> _passwordFieldKey = GlobalKey<FormFieldState>();
+
+  void _signUp(BuildContext context) async {
+    if(!_formKey.currentState.validate()) {
+      return;
+    }
+
+    String uri = "http://localhost:8080/member/signup";
+    String body = json.encode(member);
+    debugPrint(body);
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': "application/json;charset=UTF-8",
+        'Accept': "application/json;charset=UTF-8",
+      },
+      body: body,
+    ).catchError((error) {
+      debugPrint(error.toString());
+      throw error;
+    }).then((response) {
+      Map responseMap = jsonDecode(response.body);
+
+      debugPrint(response.statusCode.toString());
+
+      if(response.statusCode == 200) {
+        Navigator.of(context).pop();
+      } else {
+        //_errorMsgKey.currentState.setErrorMsg(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']);
+        debugPrint(responseMap.toString());
+      }
+    });
+  }
 
   String _validateEmail(String value) {
     if(value.isEmpty) {
@@ -68,50 +106,14 @@ class _MainView extends StatelessWidget {
   }
 
   String _validatePassword(String value) {
-    if(value.isEmpty) {
+    final passwordField = _passwordFieldKey.currentState;
+    if(passwordField.value == null || passwordField.value.toString().isEmpty) {
       return 'Password is required.';
     }
-    return null;
-  }
-
-  void _signIn(BuildContext context) async{
-    if(!_formKey.currentState.validate()) {
-      return;
+    if(passwordField.value.toString() != value) {
+      return 'Password don`t match';
     }
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String username = member.email;
-    String password = member.password;
-    String uri = "http://localhost:8080/oauth/token?grant_type=password&username=$username&password=$password";
-    String clientId = "taeu_client";
-    String clientPw = "taeu_secret";
-    String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
-    debugPrint(authorization);
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Authorization': authorization,
-      },
-    ).catchError((error) {
-      debugPrint(error.toString());
-      throw error;
-    }).then((response) {
-      Map responseMap = jsonDecode(response.body);
-
-      debugPrint(response.statusCode.toString());
-
-      if(response.statusCode == 200) {
-        prefs.setString('access_token', responseMap['access_token']);
-
-        Navigator.of(context).pushReplacementNamed('/');
-      } else {
-        _errorMsgKey.currentState.setErrorMsg(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']);
-        debugPrint(responseMap.toString());
-      }
-    });
-  }
-  void _signUp(BuildContext context) {
-    Navigator.of(context).pushReplacementNamed('/sign_up');
+    return null;
   }
 
   @override
@@ -120,56 +122,84 @@ class _MainView extends StatelessWidget {
     debugPrint(isDesktop.toString());
     final desktopMaxWidth = 400.0;
 
-    return Column(
-        children: [
-          Expanded(
-              child: Align(
-                alignment: isDesktop ? Alignment.center : Alignment.topCenter,
-                child: Form(
-                  key: _formKey,
-                  child: Column(
+    return Scrollbar(
+      child: SingleChildScrollView(
+        dragStartBehavior: DragStartBehavior.down,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Align(
+          alignment: isDesktop ? Alignment.center : Alignment.topCenter,
+          child: Form(
+            key: _formKey,
+            child: Container(
+              constraints: BoxConstraints(maxWidth: isDesktop ? desktopMaxWidth : double.infinity),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  TextFormField(
+                    decoration: InputDecoration(
+                      filled: true,
+                      icon: Icon(Icons.email),
+                      labelText: 'Email *',
+                    ),
+                    onSaved: (value) {
+                      member.email = value;
+                    },
+                    validator: _validateEmail,
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      filled: true,
+                      icon: Icon(Icons.people),
+                      labelText: 'Name *',
+                    ),
+                    onSaved: (value) {
+                      member.name = value;
+                    },
+                    validator: _validateName,
+                  ),
+                  PasswordField(
+                    fieldKey: _passwordFieldKey,
+                    labelText: 'Password *',
+                    helperText: '8자리 이상 12자리 이하',
+                    onSaved: (value) {
+                      member.password = value;
+                    },
+/*                    onFieldSubmitted: (value) {
+                      setState(() {
+                        member.password = value;
+                      });
+                    },*/
+                  ),
+                  TextFormField(
+                    obscureText: true,
+                    maxLength: 12,
+                    decoration: InputDecoration(
+                      filled: true,
+                      icon: Icon(null),
+                      labelText: 'Re-type password *',
+                    ),
+                    validator: _validatePassword,
+                  ),
+                  Row(
                     children: <Widget>[
-                      EmailField(
-                        maxWidth: isDesktop ? desktopMaxWidth : null,
-                        labelText: 'Email',
-                        onSaved: (String value) {
-                          member.email = value;
-                        },
-                        validator: _validateEmail,
-                      ),
-                      PasswordField(
-                          maxWidth: isDesktop ? desktopMaxWidth : null,
-                          labelText: 'Password',
-                          validator: _validatePassword,
-                          onSaved: (String value) {
-                            member.password = value;
-                          }
-                      ),
-                      ErrorMsg(
-                        key: _errorMsgKey,
-                      ),
-                      _LoginButton(
-                          maxWidth: isDesktop ? desktopMaxWidth : null,
-                          onTap: () {
-                            final form = _formKey.currentState;
-                            if(form.validate()) {
-                              form.save();
-                              _signIn(context);
-                            }
-                          }
-                      ),
+                      Expanded(child:SizedBox.shrink()),
                       RaisedButton(
                         child: Text('SIGN UP'),
                         onPressed: () {
-                          _signUp(context);
+                          if(_formKey.currentState.validate()) {
+                            _formKey.currentState.save();
+                            _signUp(context);
+                          }
                         },
                       ),
                     ],
-                  ),
-                ),
-              )
+                  )
+                ],
+              ),
+            ),
           ),
-        ]
+        ),
+      ),
     );
   }
 }
@@ -213,6 +243,7 @@ class _EmailFieldState extends State<EmailField> {
           validator: widget.validator,
           onFieldSubmitted: widget.onFieldSubmitted,
           decoration: InputDecoration(
+            filled: true,
             hintText: widget.hintText,
             labelText: widget.labelText,
             helperText: widget.helperText,
@@ -259,11 +290,14 @@ class _PasswordFieldState extends State<PasswordField> {
         child: TextFormField(
           key: widget.fieldKey,
           obscureText: _obscureText,
+          maxLength: 12,
           cursorColor: Theme.of(context).cursorColor,
           onSaved: widget.onSaved,
           validator: widget.validator,
           onFieldSubmitted: widget.onFieldSubmitted,
           decoration: InputDecoration(
+            filled: true,
+            icon: Icon(Icons.lock),
             hintText: widget.hintText,
             labelText: widget.labelText,
             helperText: widget.helperText,
@@ -282,75 +316,6 @@ class _PasswordFieldState extends State<PasswordField> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _LoginButton extends StatelessWidget {
-  const _LoginButton({
-    Key key,
-    @required this.onTap,
-    this.maxWidth,
-  }) : super(key: key);
-
-  final double maxWidth;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.center,
-      child: Container(
-        constraints: BoxConstraints(maxWidth: maxWidth ?? double.infinity),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          children: [
-            FlatButton(
-              color: Theme.of(context).buttonColor,
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              onPressed: onTap,
-              child: Row(
-                children: [
-                  Icon(Icons.lock),
-                  const SizedBox(width: 6),
-                  Text('SIGN IN'),
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ErrorMsg extends StatefulWidget {
-  const ErrorMsg({
-    this.key,
-  });
-
-  final Key key;
-
-  @override
-  State<ErrorMsg> createState() => _ErrorMsgState();
-}
-
-class _ErrorMsgState extends State<ErrorMsg> {
-  String errorMsg = '';
-
-  void setErrorMsg(String msg) {
-    setState(() {
-      errorMsg = msg;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      errorMsg,
     );
   }
 }
