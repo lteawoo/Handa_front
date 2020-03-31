@@ -41,9 +41,9 @@ class _SignInState extends State<SignUp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: SafeArea(
-          child: MainView(),
-        )
+      body: SafeArea(
+        child: MainView(),
+      ),
     );
   }
 }
@@ -63,7 +63,7 @@ class _MainViewState extends State<MainView> {
       return;
     }
 
-    String uri = "http://localhost:8080/member/signup";
+    String uri = "http://192.168.43.237/:8080/member/signup";
     String body = json.encode(member);
     debugPrint(body);
 
@@ -119,87 +119,271 @@ class _MainViewState extends State<MainView> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = isDisplayDesktop(context);
-    debugPrint(isDesktop.toString());
     final desktopMaxWidth = 400.0;
 
-    return Scrollbar(
-      child: SingleChildScrollView(
-        dragStartBehavior: DragStartBehavior.down,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Align(
-          alignment: isDesktop ? Alignment.center : Alignment.topCenter,
-          child: Form(
-            key: _formKey,
-            child: Container(
-              constraints: BoxConstraints(maxWidth: isDesktop ? desktopMaxWidth : double.infinity),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  TextFormField(
-                    decoration: InputDecoration(
-                      filled: true,
-                      icon: Icon(Icons.email),
-                      labelText: 'Email *',
+    return Column(
+      children: [
+        _TopBar(),
+        Expanded(
+          child: Scrollbar(
+            child: SingleChildScrollView(
+              dragStartBehavior: DragStartBehavior.down,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: isDesktop ? Alignment.center : Alignment.topCenter,
+                child: Form(
+                  key: _formKey,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: isDesktop ? desktopMaxWidth : double.infinity,
                     ),
-                    onSaved: (value) {
-                      member.email = value;
-                    },
-                    validator: _validateEmail,
-                  ),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      filled: true,
-                      icon: Icon(Icons.people),
-                      labelText: 'Name *',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        TextFormField(
+                          decoration: InputDecoration(
+                            filled: true,
+                            icon: Icon(Icons.email),
+                            labelText: 'Email *',
+                          ),
+                          onSaved: (value) {
+                            member.email = value;
+                          },
+                          validator: _validateEmail,
+                        ),
+                        TextFormField(
+                          decoration: InputDecoration(
+                            filled: true,
+                            icon: Icon(Icons.people),
+                            labelText: 'Name *',
+                          ),
+                          onSaved: (value) {
+                            member.name = value;
+                          },
+                          validator: _validateName,
+                        ),
+                        PasswordField(
+                          fieldKey: _passwordFieldKey,
+                          labelText: 'Password *',
+                          helperText: '8자리 이상 12자리 이하',
+                          onSaved: (value) {
+                            member.password = value;
+                          },
+                        ),
+                        TextFormField(
+                          obscureText: true,
+                          maxLength: 12,
+                          decoration: InputDecoration(
+                            filled: true,
+                            icon: Icon(null),
+                            labelText: 'Re-type password *',
+                          ),
+                          validator: _validatePassword,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            RaisedButton(
+                              child: Text('Back'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            Expanded(child:SizedBox.shrink()),
+                            RaisedButton(
+                              child: Text('SIGN UP'),
+                              onPressed: () {
+                                if(_formKey.currentState.validate()) {
+                                  _formKey.currentState.save();
+                                  _signUp(context);
+                                }
+                              },
+                            ),
+                          ],
+                        )
+                      ],
                     ),
-                    onSaved: (value) {
-                      member.name = value;
-                    },
-                    validator: _validateName,
                   ),
-                  PasswordField(
-                    fieldKey: _passwordFieldKey,
-                    labelText: 'Password *',
-                    helperText: '8자리 이상 12자리 이하',
-                    onSaved: (value) {
-                      member.password = value;
-                    },
-/*                    onFieldSubmitted: (value) {
-                      setState(() {
-                        member.password = value;
-                      });
-                    },*/
-                  ),
-                  TextFormField(
-                    obscureText: true,
-                    maxLength: 12,
-                    decoration: InputDecoration(
-                      filled: true,
-                      icon: Icon(null),
-                      labelText: 'Re-type password *',
-                    ),
-                    validator: _validatePassword,
-                  ),
-                  Row(
-                    children: <Widget>[
-                      Expanded(child:SizedBox.shrink()),
-                      RaisedButton(
-                        child: Text('SIGN UP'),
-                        onPressed: () {
-                          if(_formKey.currentState.validate()) {
-                            _formKey.currentState.save();
-                            _signUp(context);
-                          }
-                        },
-                      ),
-                    ],
-                  )
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
+      ],
+    );
+  }
+}
+/*child: Align(
+              alignment: isDesktop ? Alignment.center : Alignment.topCenter,
+              child: Form(
+                key: _formKey,
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: isDesktop ? desktopMaxWidth : double.infinity,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      TextFormField(
+                        decoration: InputDecoration(
+                          filled: true,
+                          icon: Icon(Icons.email),
+                          labelText: 'Email *',
+                        ),
+                        onSaved: (value) {
+                          member.email = value;
+                        },
+                        validator: _validateEmail,
+                      ),
+                      SizedBox(height: 18,),
+                      TextFormField(
+                        decoration: InputDecoration(
+                          filled: true,
+                          icon: Icon(Icons.people),
+                          labelText: 'Name *',
+                        ),
+                        onSaved: (value) {
+                          member.name = value;
+                        },
+                        validator: _validateName,
+                      ),
+                      SizedBox(height: 18,),
+                      PasswordField(
+                        fieldKey: _passwordFieldKey,
+                        labelText: 'Password *',
+                        helperText: '8자리 이상 12자리 이하',
+                        onSaved: (value) {
+                          member.password = value;
+                        },
+      *//*                    onFieldSubmitted: (value) {
+                            setState(() {
+                              member.password = value;
+                            });
+                          },*//*
+                      ),
+                      TextFormField(
+                        obscureText: true,
+                        maxLength: 12,
+                        decoration: InputDecoration(
+                          filled: true,
+                          icon: Icon(null),
+                          labelText: 'Re-type password *',
+                        ),
+                        validator: _validatePassword,
+                      ),
+                      TextFormField(
+                        obscureText: true,
+                        maxLength: 12,
+                        decoration: InputDecoration(
+                          filled: true,
+                          icon: Icon(null),
+                          labelText: 'test*',
+                        ),
+                      ),
+                      TextFormField(
+                        obscureText: true,
+                        maxLength: 12,
+                        decoration: InputDecoration(
+                          filled: true,
+                          icon: Icon(null),
+                          labelText: 'test*',
+                        ),
+                      ),
+                      TextFormField(
+                        obscureText: true,
+                        maxLength: 12,
+                        decoration: InputDecoration(
+                          filled: true,
+                          icon: Icon(null),
+                          labelText: 'test*',
+                        ),
+                      ),
+                      TextFormField(
+                        obscureText: true,
+                        maxLength: 12,
+                        decoration: InputDecoration(
+                          filled: true,
+                          icon: Icon(null),
+                          labelText: 'test*',
+                        ),
+                      ),
+                      TextFormField(
+                        obscureText: true,
+                        maxLength: 12,
+                        decoration: InputDecoration(
+                          filled: true,
+                          icon: Icon(null),
+                          labelText: 'test*',
+                        ),
+                      ),
+                      TextFormField(
+                        obscureText: true,
+                        maxLength: 12,
+                        decoration: InputDecoration(
+                          filled: true,
+                          icon: Icon(null),
+                          labelText: 'test*',
+                        ),
+                      ),
+                      Row(
+                        children: <Widget>[
+                          RaisedButton(
+                            child: Text('Back'),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          Expanded(child:SizedBox.shrink()),
+                          RaisedButton(
+                            child: Text('SIGN UP'),
+                            onPressed: () {
+                              if(_formKey.currentState.validate()) {
+                                _formKey.currentState.save();
+                                _signUp(context);
+                              }
+                            },
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),*/
+class _TopBar extends StatelessWidget {
+  const _TopBar({
+    Key key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = const SizedBox(width: 30);
+    return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 8),
+        padding: EdgeInsets.symmetric(horizontal: 30),
+        child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ExcludeSemantics(
+                      child: SizedBox(
+                          height: 80
+                      )
+                  ),
+                  spacing,
+                  Text(
+                      'Handa',
+                      style: Theme.of(context).textTheme.bodyText1.copyWith(
+                        fontSize: 35,
+                        fontWeight: FontWeight.w600,
+                      )
+                  ),
+                ],
+              ),
+            ]
+        )
     );
   }
 }
