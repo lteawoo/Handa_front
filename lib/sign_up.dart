@@ -125,103 +125,16 @@ class _MainViewState extends State<MainView> {
       children: [
         _TopBar(),
         Expanded(
-          child: Scrollbar(
-            child: SingleChildScrollView(
-              dragStartBehavior: DragStartBehavior.down,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: isDesktop ? Alignment.center : Alignment.topCenter,
+          child: Container(
+           //color: const Color(0xffff0000),
+            constraints: BoxConstraints(maxWidth: isDesktop ? desktopMaxWidth : double.infinity),
+            child: Scrollbar(
+              child: SingleChildScrollView(
+                dragStartBehavior: DragStartBehavior.down,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Form(
                   key: _formKey,
-                  child: Container(
-                    color: const Color(0xffff0000),
-                    constraints: BoxConstraints(
-                      maxWidth: isDesktop ? desktopMaxWidth : double.infinity,
-                    ),
-                    child: Column(
-                      children: <Widget>[
-                        TextFormField(
-                          decoration: InputDecoration(
-                            filled: true,
-                            icon: Icon(Icons.email),
-                            labelText: 'Email *',
-                          ),
-                          onSaved: (value) {
-                            member.email = value;
-                          },
-                          validator: _validateEmail,
-                        ),
-                        TextFormField(
-                          decoration: InputDecoration(
-                            filled: true,
-                            icon: Icon(Icons.people),
-                            labelText: 'Name *',
-                          ),
-                          onSaved: (value) {
-                            member.name = value;
-                          },
-                          validator: _validateName,
-                        ),
-                        PasswordField(
-                          fieldKey: _passwordFieldKey,
-                          labelText: 'Password *',
-                          helperText: '8자리 이상 12자리 이하',
-                          onSaved: (value) {
-                            member.password = value;
-                          },
-                        ),
-                        TextFormField(
-                          obscureText: true,
-                          maxLength: 12,
-                          decoration: InputDecoration(
-                            filled: true,
-                            icon: Icon(null),
-                            labelText: 'Re-type password *',
-                          ),
-                          validator: _validatePassword,
-                        ),
-                        Row(
-                          children: <Widget>[
-                            RaisedButton(
-                              child: Text('Back'),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                            Expanded(child:SizedBox.shrink()),
-                            RaisedButton(
-                              child: Text('SIGN UP'),
-                              onPressed: () {
-                                if(_formKey.currentState.validate()) {
-                                  _formKey.currentState.save();
-                                  _signUp(context);
-                                }
-                              },
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-/*child: Align(
-              alignment: isDesktop ? Alignment.center : Alignment.topCenter,
-              child: Form(
-                key: _formKey,
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: isDesktop ? desktopMaxWidth : double.infinity,
-                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       TextFormField(
                         decoration: InputDecoration(
@@ -234,7 +147,6 @@ class _MainViewState extends State<MainView> {
                         },
                         validator: _validateEmail,
                       ),
-                      SizedBox(height: 18,),
                       TextFormField(
                         decoration: InputDecoration(
                           filled: true,
@@ -246,7 +158,6 @@ class _MainViewState extends State<MainView> {
                         },
                         validator: _validateName,
                       ),
-                      SizedBox(height: 18,),
                       PasswordField(
                         fieldKey: _passwordFieldKey,
                         labelText: 'Password *',
@@ -254,11 +165,6 @@ class _MainViewState extends State<MainView> {
                         onSaved: (value) {
                           member.password = value;
                         },
-      *//*                    onFieldSubmitted: (value) {
-                            setState(() {
-                              member.password = value;
-                            });
-                          },*//*
                       ),
                       TextFormField(
                         obscureText: true,
@@ -269,60 +175,6 @@ class _MainViewState extends State<MainView> {
                           labelText: 'Re-type password *',
                         ),
                         validator: _validatePassword,
-                      ),
-                      TextFormField(
-                        obscureText: true,
-                        maxLength: 12,
-                        decoration: InputDecoration(
-                          filled: true,
-                          icon: Icon(null),
-                          labelText: 'test*',
-                        ),
-                      ),
-                      TextFormField(
-                        obscureText: true,
-                        maxLength: 12,
-                        decoration: InputDecoration(
-                          filled: true,
-                          icon: Icon(null),
-                          labelText: 'test*',
-                        ),
-                      ),
-                      TextFormField(
-                        obscureText: true,
-                        maxLength: 12,
-                        decoration: InputDecoration(
-                          filled: true,
-                          icon: Icon(null),
-                          labelText: 'test*',
-                        ),
-                      ),
-                      TextFormField(
-                        obscureText: true,
-                        maxLength: 12,
-                        decoration: InputDecoration(
-                          filled: true,
-                          icon: Icon(null),
-                          labelText: 'test*',
-                        ),
-                      ),
-                      TextFormField(
-                        obscureText: true,
-                        maxLength: 12,
-                        decoration: InputDecoration(
-                          filled: true,
-                          icon: Icon(null),
-                          labelText: 'test*',
-                        ),
-                      ),
-                      TextFormField(
-                        obscureText: true,
-                        maxLength: 12,
-                        decoration: InputDecoration(
-                          filled: true,
-                          icon: Icon(null),
-                          labelText: 'test*',
-                        ),
                       ),
                       Row(
                         children: <Widget>[
@@ -348,7 +200,14 @@ class _MainViewState extends State<MainView> {
                   ),
                 ),
               ),
-            ),*/
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _TopBar extends StatelessWidget {
   const _TopBar({
     Key key,
@@ -388,8 +247,8 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class EmailField extends StatefulWidget {
-  const EmailField({
+class TextField extends StatefulWidget {
+  const TextField({
     this.fieldKey,
     this.hintText,
     this.labelText,
@@ -410,10 +269,10 @@ class EmailField extends StatefulWidget {
   final ValueChanged<String> onFieldSubmitted;
 
   @override
-  State<EmailField> createState() => _EmailFieldState();
+  State<TextField> createState() => _TextFieldState();
 }
 
-class _EmailFieldState extends State<EmailField> {
+class _TextFieldState extends State<TextField> {
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -427,7 +286,6 @@ class _EmailFieldState extends State<EmailField> {
           validator: widget.validator,
           onFieldSubmitted: widget.onFieldSubmitted,
           decoration: InputDecoration(
-            filled: true,
             hintText: widget.hintText,
             labelText: widget.labelText,
             helperText: widget.helperText,
@@ -494,7 +352,7 @@ class _PasswordFieldState extends State<PasswordField> {
               },
               child: Icon(
                 _obscureText ? Icons.visibility : Icons.visibility_off,
-                semanticLabel: _obscureText ? '보여줌' : '안보여줌',
+                semanticLabel: _obscureText ? 'on' : 'off',
               ),
             ),
           ),

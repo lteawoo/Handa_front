@@ -113,48 +113,52 @@ class _MainView extends StatelessWidget {
           Expanded(
             child: Align(
               alignment: isDesktop ? Alignment.center : Alignment.topCenter,
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    EmailField(
-                      maxWidth: isDesktop ? desktopMaxWidth : null,
-                      labelText: 'Email',
-                      onSaved: (String value) {
-                        member.email = value;
-                      },
-                      validator: _validateEmail,
-                    ),
-                    PasswordField(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      EmailField(
                         maxWidth: isDesktop ? desktopMaxWidth : null,
-                        labelText: 'Password',
-                        validator: _validatePassword,
+                        labelText: 'Email',
                         onSaved: (String value) {
-                          member.password = value;
-                        }
-                    ),
-                    ErrorMsg(
-                      key: _errorMsgKey,
-                    ),
-                    _LoginButton(
-                        maxWidth: isDesktop ? desktopMaxWidth : null,
-                        onTap: () {
-                          final form = _formKey.currentState;
-                          if(form.validate()) {
-                            form.save();
-                            _signIn(context);
+                          member.email = value;
+                        },
+                        validator: _validateEmail,
+                      ),
+                      PasswordField(
+                          maxWidth: isDesktop ? desktopMaxWidth : null,
+                          labelText: 'Password',
+                          validator: _validatePassword,
+                          onSaved: (String value) {
+                            member.password = value;
                           }
-                        }
-                    ),
-                    RaisedButton(
-                      child: Text('SIGN UP'),
-                      onPressed: () {
-                        _signUp(context);
-                      },
-                    ),
-                  ],
+                      ),
+                      ErrorMsg(
+                        key: _errorMsgKey,
+                      ),
+                      _LoginButton(
+                          maxWidth: isDesktop ? desktopMaxWidth : null,
+                          onTap: () {
+                            final form = _formKey.currentState;
+                            if(form.validate()) {
+                              form.save();
+                              _signIn(context);
+                            }
+                          }
+                      ),
+                      OutlineButton(
+                        child: Text('Create an Account'),
+                        borderSide: BorderSide.none,
+                        onPressed: () {
+                          _signUp(context);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -305,7 +309,7 @@ class _PasswordFieldState extends State<PasswordField> {
               },
               child: Icon(
                 _obscureText ? Icons.visibility : Icons.visibility_off,
-                semanticLabel: _obscureText ? '보여줌' : '안보여줌',
+                semanticLabel: _obscureText ? 'on' : 'off',
               ),
             ),
           ),
@@ -334,6 +338,7 @@ class _LoginButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
+            Expanded(child: SizedBox.shrink()),
             FlatButton(
               color: Theme.of(context).buttonColor,
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 24),
