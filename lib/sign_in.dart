@@ -68,7 +68,7 @@ class _MainView extends StatelessWidget {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String username = member.email;
     String password = member.password;
-    String uri = "http://localhost:8080/oauth/token?grant_type=password&username=$username&password=$password";
+    String uri = "http://192.168.43.237:8080/oauth/token?grant_type=password&username=$username&password=$password";
     String clientId = "taeu_client";
     String clientPw = "taeu_secret";
     String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
@@ -90,7 +90,7 @@ class _MainView extends StatelessWidget {
       if(response.statusCode == 200) {
         prefs.setString('access_token', responseMap['access_token']);
 
-        Navigator.of(context).pushReplacementNamed('/');
+        Navigator.of(context).pushReplacementNamed('/home');
       } else {
         _errorMsgKey.currentState.setErrorMsg(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']);
         debugPrint(responseMap.toString());
@@ -104,59 +104,101 @@ class _MainView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDesktop = isDisplayDesktop(context);
-    debugPrint(isDesktop.toString());
     final desktopMaxWidth = 400.0;
 
     return Column(
+        mainAxisSize: MainAxisSize.max,
         children: [
+          if (isDesktop) _TopBar(),
           Expanded(
-              child: Align(
-                alignment: isDesktop ? Alignment.center : Alignment.topCenter,
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: <Widget>[
-                      EmailField(
+            child: Align(
+              alignment: isDesktop ? Alignment.center : Alignment.topCenter,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    EmailField(
+                      maxWidth: isDesktop ? desktopMaxWidth : null,
+                      labelText: 'Email',
+                      onSaved: (String value) {
+                        member.email = value;
+                      },
+                      validator: _validateEmail,
+                    ),
+                    PasswordField(
                         maxWidth: isDesktop ? desktopMaxWidth : null,
-                        labelText: 'Email',
+                        labelText: 'Password',
+                        validator: _validatePassword,
                         onSaved: (String value) {
-                          member.email = value;
-                        },
-                        validator: _validateEmail,
-                      ),
-                      PasswordField(
-                          maxWidth: isDesktop ? desktopMaxWidth : null,
-                          labelText: 'Password',
-                          validator: _validatePassword,
-                          onSaved: (String value) {
-                            member.password = value;
+                          member.password = value;
+                        }
+                    ),
+                    ErrorMsg(
+                      key: _errorMsgKey,
+                    ),
+                    _LoginButton(
+                        maxWidth: isDesktop ? desktopMaxWidth : null,
+                        onTap: () {
+                          final form = _formKey.currentState;
+                          if(form.validate()) {
+                            form.save();
+                            _signIn(context);
                           }
-                      ),
-                      ErrorMsg(
-                        key: _errorMsgKey,
-                      ),
-                      _LoginButton(
-                          maxWidth: isDesktop ? desktopMaxWidth : null,
-                          onTap: () {
-                            final form = _formKey.currentState;
-                            if(form.validate()) {
-                              form.save();
-                              _signIn(context);
-                            }
-                          }
-                      ),
-                      RaisedButton(
-                        child: Text('SIGN UP'),
-                        onPressed: () {
-                          _signUp(context);
-                        },
-                      ),
-                    ],
-                  ),
+                        }
+                    ),
+                    RaisedButton(
+                      child: Text('SIGN UP'),
+                      onPressed: () {
+                        _signUp(context);
+                      },
+                    ),
+                  ],
                 ),
-              )
+              ),
+            ),
           ),
         ]
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  const _TopBar({
+    Key key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = const SizedBox(width: 30);
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: EdgeInsets.symmetric(horizontal: 30),
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ExcludeSemantics(
+                  child: SizedBox(
+                      height: 80
+                  )
+              ),
+              spacing,
+              Text(
+                'Handa',
+                style: Theme.of(context).textTheme.bodyText1.copyWith(
+                  fontSize: 35,
+                  fontWeight: FontWeight.w600,
+                )
+              ),
+            ],
+          ),
+        ]
+      )
     );
   }
 }
