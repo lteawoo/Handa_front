@@ -126,8 +126,7 @@ class _MainViewState extends State<MainView> {
         _TopBar(),
         Expanded(
           child: Container(
-           //color: const Color(0xffff0000),
-            constraints: BoxConstraints(maxWidth: isDesktop ? desktopMaxWidth : double.infinity),
+           color: const Color(0xffff0000),
             child: Scrollbar(
               child: SingleChildScrollView(
                 dragStartBehavior: DragStartBehavior.down,
@@ -135,6 +134,7 @@ class _MainViewState extends State<MainView> {
                 child: Form(
                   key: _formKey,
                   child: Column(
+                    mainAxisAlignment: isDesktop ? MainAxisAlignment.center : MainAxisAlignment.start,
                     children: <Widget>[
                       TextFormField(
                         decoration: InputDecoration(

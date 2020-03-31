@@ -107,62 +107,58 @@ class _MainView extends StatelessWidget {
     final desktopMaxWidth = 400.0;
 
     return Column(
-        mainAxisSize: MainAxisSize.max,
         children: [
           if (isDesktop) _TopBar(),
           Expanded(
-            child: Align(
-              alignment: isDesktop ? Alignment.center : Alignment.topCenter,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      EmailField(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              //color: const Color(0xffff0000),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: isDesktop ? MainAxisAlignment.center : MainAxisAlignment.start,
+                  children: <Widget>[
+                    EmailField(
+                      maxWidth: isDesktop ? desktopMaxWidth : null,
+                      labelText: 'Email',
+                      onSaved: (String value) {
+                        member.email = value;
+                      },
+                      validator: _validateEmail,
+                    ),
+                    PasswordField(
                         maxWidth: isDesktop ? desktopMaxWidth : null,
-                        labelText: 'Email',
+                        labelText: 'Password',
+                        validator: _validatePassword,
                         onSaved: (String value) {
-                          member.email = value;
-                        },
-                        validator: _validateEmail,
-                      ),
-                      PasswordField(
-                          maxWidth: isDesktop ? desktopMaxWidth : null,
-                          labelText: 'Password',
-                          validator: _validatePassword,
-                          onSaved: (String value) {
-                            member.password = value;
+                          member.password = value;
+                        }
+                    ),
+                    ErrorMsg(
+                      key: _errorMsgKey,
+                    ),
+                    _LoginButton(
+                        maxWidth: isDesktop ? desktopMaxWidth : null,
+                        onTap: () {
+                          final form = _formKey.currentState;
+                          if(form.validate()) {
+                            form.save();
+                            _signIn(context);
                           }
-                      ),
-                      ErrorMsg(
-                        key: _errorMsgKey,
-                      ),
-                      _LoginButton(
-                          maxWidth: isDesktop ? desktopMaxWidth : null,
-                          onTap: () {
-                            final form = _formKey.currentState;
-                            if(form.validate()) {
-                              form.save();
-                              _signIn(context);
-                            }
-                          }
-                      ),
-                      OutlineButton(
-                        child: Text('Create an Account'),
-                        borderSide: BorderSide.none,
-                        onPressed: () {
-                          _signUp(context);
-                        },
-                      ),
-                    ],
-                  ),
+                        }
+                    ),
+                    OutlineButton(
+                      child: Text('Create an Account'),
+                      borderSide: BorderSide.none,
+                      onPressed: () {
+                        _signUp(context);
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
+          )
         ]
     );
   }
