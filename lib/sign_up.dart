@@ -134,11 +134,11 @@ class _MainViewState extends State<MainView> {
                 child: Form(
                   key: _formKey,
                   child: Container(
+                    color: const Color(0xffff0000),
                     constraints: BoxConstraints(
                       maxWidth: isDesktop ? desktopMaxWidth : double.infinity,
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
                         TextFormField(
                           decoration: InputDecoration(
