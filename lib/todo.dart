@@ -57,6 +57,16 @@ class TodoItemListWidget extends StatefulWidget {
 }
 
 class _TodoItemListState extends State<TodoItemListWidget> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<String> _getAccessTokenFromStorage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
+  }
+
   void _addTodoItem(TodoItem todoItem) {
     setState(() {
       widget.items.add(todoItem);
@@ -268,12 +278,18 @@ class _TodoItemListState extends State<TodoItemListWidget> {
   }
 
   void checkToken() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String token = prefs.getString('access_token');
+//    SharedPreferences prefs = await SharedPreferences.getInstance();
+//    String token = prefs.getString('access_token');
+    String token = await _getAccessTokenFromStorage();
+    if(token == null || token.isEmpty) {
+      debugPrint('token is null');
+      return;
+    }
     String clientId = "taeu_client";
     String clientPw = "taeu_secret";
     String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
     String uri = 'http://localhost:8080/oauth/check_token?token=$token';
+    debugPrint(authorization + ', ' + uri);
 
     final response = await http.post(
       uri,
