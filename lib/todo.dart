@@ -47,16 +47,12 @@ class Member {
 }
 
 class TodoItemListWidget extends StatefulWidget {
-  final List<TodoItem> items;
-  const TodoItemListWidget({
-    this.items,
-  });
-
   @override
   _TodoItemListState createState() => _TodoItemListState();
 }
 
 class _TodoItemListState extends State<TodoItemListWidget> {
+  final List<TodoItem> items = [];
   @override
   void initState() {
     super.initState();
@@ -67,15 +63,25 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     return prefs.getString('access_token');
   }
 
+  Future<List<TodoItem>> fetchItems() async {
+    final response = await http.post(
+      'http://localhost:8080/api/list',
+    ).catchError((error) {
+      throw error;
+    });
+
+    debugPrint(response.body);
+  }
+
   void _addTodoItem(TodoItem todoItem) {
     setState(() {
-      widget.items.add(todoItem);
+      items.add(todoItem);
     });
   }
 
   void _deleteTodoItem(TodoItem todoItem) {
     setState(() {
-      widget.items.remove(todoItem);
+     items.remove(todoItem);
     });
   }
 
@@ -88,7 +94,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
       body: Center(
         child: ReorderableListView(
             children: [
-              for (final item in widget.items)
+              for (final item in items)
                 Card(
                   key: UniqueKey(),
                   child: StatefulBuilder(builder: (context, setState) {
@@ -116,9 +122,9 @@ class _TodoItemListState extends State<TodoItemListWidget> {
             ],
             onReorder: (oldIndex, newIndex) {
               setState(() {
-                TodoItem item = widget.items[oldIndex];
-                widget.items.removeAt(oldIndex);
-                widget.items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
+                TodoItem item = items[oldIndex];
+                items.removeAt(oldIndex);
+                items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
               });
             }
         ),
@@ -179,12 +185,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                   Row(
                     mainAxisSize: MainAxisSize.max,
                     children: <Widget>[
-                      /*FlatButton(
-                        child: Text('회원가입'),
-                        onPressed: () {
-                          fetchItem();
-                        },
-                      ),*/
                       FlatButton(
                         child: Text('accesstoken'),
                         onPressed: () {
@@ -228,30 +228,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     });
   }
 
-  Future<Member> signin() async {
-    String username = 'test@taeu.kr';
-    String password = '123415';
-    String header = base64Encode(utf8.encode('$username:$password'));
-
-    Member member = new Member(email: username, password: password);
-    debugPrint(member.toJson().toString());
-    debugPrint('json : ' + jsonEncode(member));
-    final response = await http.post(
-      'http://localhost:8080/member/signin',
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8'
-      },
-      body: jsonEncode(member),
-    ).catchError((error) {
-      throw error;
-    });
-    debugPrint(response.body);
-    Map<String, String> temp = response.headers;
-    for(String s in temp.keys) {
-      debugPrint(s + ": " + temp[s]);
-    }
-  }
-
   void getAccessToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String username = 'test@taeu.kr';
@@ -281,13 +257,14 @@ class _TodoItemListState extends State<TodoItemListWidget> {
 //    SharedPreferences prefs = await SharedPreferences.getInstance();
 //    String token = prefs.getString('access_token');
     String token = await _getAccessTokenFromStorage();
-    if(token == null || token.isEmpty) {
+    if (token == null || token.isEmpty) {
       debugPrint('token is null');
       return;
     }
     String clientId = "taeu_client";
     String clientPw = "taeu_secret";
-    String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
+    String authorization = "Basic " +
+        base64Encode(utf8.encode('$clientId:$clientPw'));
     String uri = 'http://localhost:8080/oauth/check_token?token=$token';
     debugPrint(authorization + ', ' + uri);
 
@@ -304,13 +281,4 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     debugPrint(response.body);
   }
 
-  Future<List<TodoItem>> fetchItems() async {
-    final response = await http.post(
-      'http://localhost:8080/api/list',
-    ).catchError((error) {
-      throw error;
-    });
-
-    debugPrint(response.body);
-  }
 }
