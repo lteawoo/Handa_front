@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:handa/layout/adaptive.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 class Member {
@@ -63,7 +62,7 @@ class _MainViewState extends State<MainView> {
       return;
     }
 
-    String uri = "http://192.168.43.237/:8080/member/signup";
+    String uri = "http://localhost:8080/member/signup";
     String body = json.encode(member);
     debugPrint(body);
 
@@ -126,7 +125,7 @@ class _MainViewState extends State<MainView> {
         _TopBar(),
         Expanded(
           child: Container(
-           color: const Color(0xffff0000),
+           //color: const Color(0xffff0000),
             child: Scrollbar(
               child: SingleChildScrollView(
                 dragStartBehavior: DragStartBehavior.down,
@@ -136,29 +135,26 @@ class _MainViewState extends State<MainView> {
                   child: Column(
                     mainAxisAlignment: isDesktop ? MainAxisAlignment.center : MainAxisAlignment.start,
                     children: <Widget>[
-                      TextFormField(
-                        decoration: InputDecoration(
-                          filled: true,
-                          icon: Icon(Icons.email),
-                          labelText: 'Email *',
-                        ),
+                      TextField(
+                        maxWidth: isDesktop ? desktopMaxWidth : null,
+                        labelText: 'Email *',
+                        icon: Icons.email,
                         onSaved: (value) {
                           member.email = value;
                         },
                         validator: _validateEmail,
                       ),
-                      TextFormField(
-                        decoration: InputDecoration(
-                          filled: true,
-                          icon: Icon(Icons.people),
-                          labelText: 'Name *',
-                        ),
+                      TextField(
+                        maxWidth: isDesktop ? desktopMaxWidth : null,
+                        labelText: 'Name *',
+                        icon: Icons.people,
                         onSaved: (value) {
                           member.name = value;
                         },
                         validator: _validateName,
                       ),
                       PasswordField(
+                        maxWidth: isDesktop ? desktopMaxWidth : null,
                         fieldKey: _passwordFieldKey,
                         labelText: 'Password *',
                         helperText: '8자리 이상 12자리 이하',
@@ -166,36 +162,38 @@ class _MainViewState extends State<MainView> {
                           member.password = value;
                         },
                       ),
-                      TextFormField(
-                        obscureText: true,
-                        maxLength: 12,
-                        decoration: InputDecoration(
-                          filled: true,
-                          icon: Icon(null),
-                          labelText: 'Re-type password *',
-                        ),
+                      TextField(
+                        maxWidth: isDesktop ? desktopMaxWidth : null,
+                        labelText: 'Re-type password *',
                         validator: _validatePassword,
                       ),
-                      Row(
-                        children: <Widget>[
-                          RaisedButton(
-                            child: Text('Back'),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                          Expanded(child:SizedBox.shrink()),
-                          RaisedButton(
-                            child: Text('SIGN UP'),
-                            onPressed: () {
-                              if(_formKey.currentState.validate()) {
-                                _formKey.currentState.save();
-                                _signUp(context);
-                              }
-                            },
-                          ),
-                        ],
-                      )
+                      Align(
+                        alignment: Alignment.center,
+                        child: Container(
+                          constraints: BoxConstraints(maxWidth: isDesktop ? desktopMaxWidth : double.infinity),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Row(
+                            children: <Widget>[
+                              RaisedButton(
+                                child: Text('Back'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              Expanded(child:SizedBox.shrink()),
+                              RaisedButton(
+                                child: Text('SIGN UP'),
+                                onPressed: () {
+                                  if(_formKey.currentState.validate()) {
+                                    _formKey.currentState.save();
+                                    _signUp(context);
+                                  }
+                                },
+                              ),
+                            ],
+                          )
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -250,6 +248,8 @@ class _TopBar extends StatelessWidget {
 class TextField extends StatefulWidget {
   const TextField({
     this.fieldKey,
+    this.obscureText,
+    this.icon,
     this.hintText,
     this.labelText,
     this.helperText,
@@ -260,6 +260,8 @@ class TextField extends StatefulWidget {
   });
 
   final Key fieldKey;
+  final bool obscureText;
+  final IconData icon;
   final String hintText;
   final String labelText;
   final String helperText;
@@ -281,11 +283,14 @@ class _TextFieldState extends State<TextField> {
         constraints: BoxConstraints(maxWidth: widget.maxWidth ?? double.infinity),
         child: TextFormField(
           key: widget.fieldKey,
+          obscureText: widget.obscureText == null ? false : widget.obscureText,
           cursorColor: Theme.of(context).cursorColor,
           onSaved: widget.onSaved,
           validator: widget.validator,
           onFieldSubmitted: widget.onFieldSubmitted,
           decoration: InputDecoration(
+            filled: true,
+            icon: Icon(widget.icon),
             hintText: widget.hintText,
             labelText: widget.labelText,
             helperText: widget.helperText,

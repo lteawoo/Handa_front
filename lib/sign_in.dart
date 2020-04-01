@@ -45,7 +45,6 @@ class _SignInState extends State<SignIn> {
 class _MainView extends StatelessWidget {
   final Member member = Member();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final GlobalKey<_ErrorMsgState> _errorMsgKey = GlobalKey<_ErrorMsgState>();
 
   String _validateEmail(String value) {
     if(value.isEmpty) {
@@ -68,7 +67,7 @@ class _MainView extends StatelessWidget {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String username = member.email;
     String password = member.password;
-    String uri = "http://192.168.43.237:8080/oauth/token?grant_type=password&username=$username&password=$password";
+    String uri = "http://localhost:8080/oauth/token?grant_type=password&username=$username&password=$password";
     String clientId = "taeu_client";
     String clientPw = "taeu_secret";
     String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
@@ -80,22 +79,27 @@ class _MainView extends StatelessWidget {
         'Authorization': authorization,
       },
     ).catchError((error) {
-      debugPrint(error.toString());
+      Scaffold.of(context).hideCurrentSnackBar();
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text(error.toString()),
+      ));
       throw error;
-    }).then((response) {
-      Map responseMap = jsonDecode(response.body);
-
-      debugPrint(response.statusCode.toString());
-
-      if(response.statusCode == 200) {
-        prefs.setString('access_token', responseMap['access_token']);
-
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else {
-        _errorMsgKey.currentState.setErrorMsg(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']);
-        debugPrint(responseMap.toString());
-      }
     });
+
+    Map responseMap = jsonDecode(response.body);
+    debugPrint(response.statusCode.toString());
+
+    if(response.statusCode == 200) {
+      prefs.setString('access_token', responseMap['access_token']);
+
+      Navigator.of(context).pushReplacementNamed('/home');
+    } else {
+      Scaffold.of(context).hideCurrentSnackBar();
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']),
+      ));
+      debugPrint(responseMap.toString());
+    }
   }
   void _signUp(BuildContext context) {
     Navigator.of(context).pushNamed('/sign_up');
@@ -118,6 +122,24 @@ class _MainView extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: isDesktop ? MainAxisAlignment.center : MainAxisAlignment.start,
                   children: <Widget>[
+                    if (!isDesktop)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ExcludeSemantics(
+                              child: SizedBox(
+                                  height: 80
+                              )
+                          ),
+                          Text(
+                              'Handa',
+                              style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                fontSize: 35,
+                                fontWeight: FontWeight.w600,
+                              )
+                          ),
+                        ],
+                      ),
                     EmailField(
                       maxWidth: isDesktop ? desktopMaxWidth : null,
                       labelText: 'Email',
@@ -133,9 +155,6 @@ class _MainView extends StatelessWidget {
                         onSaved: (String value) {
                           member.password = value;
                         }
-                    ),
-                    ErrorMsg(
-                      key: _errorMsgKey,
                     ),
                     _LoginButton(
                         maxWidth: isDesktop ? desktopMaxWidth : null,
@@ -353,34 +372,6 @@ class _LoginButton extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class ErrorMsg extends StatefulWidget {
-  const ErrorMsg({
-    this.key,
-  });
-
-  final Key key;
-
-  @override
-  State<ErrorMsg> createState() => _ErrorMsgState();
-}
-
-class _ErrorMsgState extends State<ErrorMsg> {
-  String errorMsg = '';
-
-  void setErrorMsg(String msg) {
-    setState(() {
-      errorMsg = msg;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      errorMsg,
     );
   }
 }
