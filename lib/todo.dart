@@ -26,26 +26,6 @@ class TodoItem {
   }
 }
 
-class Member {
-  String email;
-  String password;
-
-  Member({
-    this.email,
-    this.password,
-  });
-
-  Map<String, dynamic> toJson() =>
-      {
-        'email': {
-          'value': email,
-        },
-        'password': {
-          'value': password,
-        },
-      };
-}
-
 class TodoItemListWidget extends StatefulWidget {
   @override
   _TodoItemListState createState() => _TodoItemListState();
@@ -56,6 +36,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
   @override
   void initState() {
     super.initState();
+//    items.addAll(fetchItems());
   }
 
   Future<String> _getAccessTokenFromStorage() async {
@@ -64,19 +45,62 @@ class _TodoItemListState extends State<TodoItemListWidget> {
   }
 
   Future<List<TodoItem>> fetchItems() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String accessToken = prefs.getString('access_token');
+    debugPrint('token : ' + accessToken);
+
+    final response = await http.get(
+      'http://localhost:8080/api/item/list',
+      headers: {
+        'Authorization' : 'Bearer ' + accessToken,
+        'Accept': "application/json;charset=UTF-8",
+      },
+    ).catchError((error) {
+      throw error;
+    });
+
+
+    debugPrint(response.statusCode.toString());
+
+    if(response.statusCode == 200) {
+      final parsed = jsonDecode(response.body).cast<Map<String, dynamic>>();
+      List<TodoItem> list = parsed.map<TodoItem>((json) => TodoItem.fromJson(json)).toList();
+      return list;
+    } else {
+      Map responseMap = jsonDecode(response.body);
+      Scaffold.of(context).hideCurrentSnackBar();
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']),
+      ));
+      return null;
+    }
+  }
+
+  void _addTodoItem(TodoItem todoItem) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String accessToken = prefs.getString('access_token');
+    debugPrint('token : ' + accessToken);
+
     final response = await http.post(
-      'http://localhost:8080/api/list',
+      'http://localhost:8080/api/item/write',
+      headers: {
+        'Authorization' : 'Bearer ' + accessToken,
+        'Content-Type': "application/json;charset=UTF-8",
+        'Accept': "application/json;charset=UTF-8",
+      },
+      body: json.encode({
+        'content': todoItem.content,
+      }),
     ).catchError((error) {
       throw error;
     });
 
     debugPrint(response.body);
-  }
-
-  void _addTodoItem(TodoItem todoItem) {
-    setState(() {
-      items.add(todoItem);
-    });
+    if(response.statusCode == 200) {
+      setState(() {
+        items.add(todoItem);
+      });
+    }
   }
 
   void _deleteTodoItem(TodoItem todoItem) {
