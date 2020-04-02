@@ -10,11 +10,13 @@ class TodoItem {
   int no;
   String content;
   bool done;
+  //int order;
 
   TodoItem({
     this.no,
     this.content,
     this.done,
+    //this.order,
   });
 
   factory TodoItem.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class TodoItem {
       no: json['no'],
       content: json['content'],
       done: json['done'],
+      //order: json['order']
     );
   }
 }
