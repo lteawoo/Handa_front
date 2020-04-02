@@ -33,10 +33,12 @@ class TodoItemListWidget extends StatefulWidget {
 
 class _TodoItemListState extends State<TodoItemListWidget> {
   final List<TodoItem> items = [];
+
   @override
   void initState() {
+    debugPrint('init');
     super.initState();
-//    items.addAll(fetchItems());
+    _fetchItems();
   }
 
   Future<String> _getAccessTokenFromStorage() async {
@@ -44,9 +46,11 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     return prefs.getString('access_token');
   }
 
-  Future<List<TodoItem>> fetchItems() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String accessToken = prefs.getString('access_token');
+  void _fetchItems() async {
+    String accessToken = await _getAccessTokenFromStorage();
+    if(accessToken == null) {
+      return;
+    }
     debugPrint('token : ' + accessToken);
 
     final response = await http.get(
@@ -56,16 +60,17 @@ class _TodoItemListState extends State<TodoItemListWidget> {
         'Accept': "application/json;charset=UTF-8",
       },
     ).catchError((error) {
+      debugPrint(error);
       throw error;
     });
-
-
     debugPrint(response.statusCode.toString());
 
     if(response.statusCode == 200) {
       final parsed = jsonDecode(response.body).cast<Map<String, dynamic>>();
       List<TodoItem> list = parsed.map<TodoItem>((json) => TodoItem.fromJson(json)).toList();
-      return list;
+      setState(() {
+        items.addAll(list);
+      });
     } else {
       Map responseMap = jsonDecode(response.body);
       Scaffold.of(context).hideCurrentSnackBar();
@@ -74,13 +79,55 @@ class _TodoItemListState extends State<TodoItemListWidget> {
       ));
       return null;
     }
+
+    /*list.add(new TodoItem(
+      no: 1,
+      content: '딸기를 먹자',
+      done: false,
+    ));
+
+    list.add(new TodoItem(
+      no: 2,
+      content: '바나나를 먹자',
+      done: true,
+    ));
+    list.add(new TodoItem(
+      no: 3,
+      content: '바나나를 먹자',
+      done: true,
+    ));
+    list.add(new TodoItem(
+      no: 4,
+      content: '바나나를 먹자',
+      done: true,
+    ));
+    list.add(new TodoItem(
+      no: 5,
+      content: '바나나를 먹자',
+      done: true,
+    ));    list.add(new TodoItem(
+      no: 6,
+      content: '바나나를 먹자',
+      done: true,
+    ));
+
+    setState(() =>items.addAll(list));*/
+  }
+
+
+  Future<TodoItem> _fetchItem() async {
+    String accessToken = await _getAccessTokenFromStorage();
+
+    final response = await Future.delayed(Duration(milliseconds: 2000));
+
+    return new TodoItem(no: 1, content: 'test');
   }
 
   void _addTodoItem(TodoItem todoItem) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String accessToken = prefs.getString('access_token');
-    debugPrint('token : ' + accessToken);
-
+    String accessToken = await _getAccessTokenFromStorage();
+    if(accessToken == null) {
+      return;
+    }
     final response = await http.post(
       'http://localhost:8080/api/item/write',
       headers: {
@@ -111,47 +158,46 @@ class _TodoItemListState extends State<TodoItemListWidget> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('items : ${items.length}');
     return Scaffold(
       appBar: AppBar(
         title: Text('Handa'),
       ),
-      body: Center(
-        child: ReorderableListView(
-            children: [
-              for (final item in items)
-                Card(
-                  key: UniqueKey(),
-                  child: StatefulBuilder(builder: (context, setState) {
-                    return new CheckboxListTile(
-                        title: new Text(item.content),
-                        value: item.done,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        onChanged: (bool val) {
-                          setState(() {
-                            item.done = val;
-                          });
-                        },
-                        secondary: IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () {
-                            setState(() {
-                              debugPrint("delete");
-                              _deleteTodoItem(item);
-                            });
-                          },
-                        )
-                    );
-                  }),
-                )
-            ],
-            onReorder: (oldIndex, newIndex) {
-              setState(() {
-                TodoItem item = items[oldIndex];
-                items.removeAt(oldIndex);
-                items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
-              });
-            }
-        ),
+      body: ReorderableListView(
+        children: [
+          for (final item in items)
+            Card(
+              key: UniqueKey(),
+              child: StatefulBuilder(builder: (context, setState) {
+                return new CheckboxListTile(
+                    title: new Text(item.content),
+                    value: item.done != null ? item.done : false,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    onChanged: (bool val) {
+                      setState(() {
+                        item.done = val;
+                      });
+                    },
+                    secondary: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        setState(() {
+                          debugPrint("delete");
+                          _deleteTodoItem(item);
+                        });
+                      },
+                    )
+                );
+              }),
+            )
+        ],
+        onReorder: (oldIndex, newIndex) {
+          setState(() {
+            TodoItem item = items[oldIndex];
+            items.removeAt(oldIndex);
+            items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
+          });
+        }
       ),
       floatingActionButton: Builder(
         builder: (context) => FloatingActionButton(
@@ -224,7 +270,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                       FlatButton(
                         child: Text('아이템목록'),
                         onPressed: () {
-                          fetchItems();
+                          //fetchItems();
                         },
                       ),
                       Expanded(

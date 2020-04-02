@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<TodoItem> list = [];
-
+    debugPrint('run..');
     return MaterialApp(
       title: 'Handa',
       initialRoute: '/sign_in',
