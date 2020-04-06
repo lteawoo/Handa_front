@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:html';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -72,6 +73,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
       final parsed = jsonDecode(response.body).cast<Map<String, dynamic>>();
       List<TodoItem> list = parsed.map<TodoItem>((json) => TodoItem.fromJson(json)).toList();
       setState(() {
+        items.clear();
         items.addAll(list);
       });
     } else {
@@ -82,39 +84,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
       ));
       return null;
     }
-
-    /*list.add(new TodoItem(
-      no: 1,
-      content: '딸기를 먹자',
-      done: false,
-    ));
-
-    list.add(new TodoItem(
-      no: 2,
-      content: '바나나를 먹자',
-      done: true,
-    ));
-    list.add(new TodoItem(
-      no: 3,
-      content: '바나나를 먹자',
-      done: true,
-    ));
-    list.add(new TodoItem(
-      no: 4,
-      content: '바나나를 먹자',
-      done: true,
-    ));
-    list.add(new TodoItem(
-      no: 5,
-      content: '바나나를 먹자',
-      done: true,
-    ));    list.add(new TodoItem(
-      no: 6,
-      content: '바나나를 먹자',
-      done: true,
-    ));
-
-    setState(() =>items.addAll(list));*/
   }
 
 
@@ -161,29 +130,43 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     });
   }
 
-  Future<TodoItem> _changePosition(int id, double position) async {
+  void _changePosition(TodoItem todoItem) async {
     String accessToken = await _getAccessTokenFromStorage();
     if(accessToken == null) {
-      return null;
+      return;
     }
 
     final response = await http.post(
-      'http://localhost:8080/api/item/modifyPosition/$id',
+      'http://localhost:8080/api/item/modifyPosition/${todoItem.id}',
       headers: {
         'Authorization' : 'Bearer ' + accessToken,
         'Content-Type': "application/json;charset=UTF-8",
         'Accept': "application/json;charset=UTF-8",
       },
       body: json.encode({
-        'position': position,
+        'position': todoItem.position,
       }),
     ).catchError((error) {
       throw error;
     });
 
     debugPrint(response.body);
+  }
 
-    return TodoItem.fromJson(json.decode(response.body));
+  void _sse() async {
+    final EventSource es = EventSource(
+        'http://localhost:8080/api/item/sse');
+
+    Stream<MessageEvent> stream = es.onMessage;
+    stream.listen((event) {
+     debugPrint(event.toString());
+    },
+    onDone: () {
+      debugPrint("on done");
+    },
+    onError: () {
+      debugPrint("on error");
+    });
   }
 
   @override
@@ -221,7 +204,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
               }),
             )
         ],
-        onReorder: (oldIndex, newIndex) async {
+        onReorder: (oldIndex, newIndex) {
           debugPrint('oldIdx : $oldIndex newIndex : $newIndex');
           debugPrint('old($oldIndex): ${items[oldIndex].content}-${items[oldIndex].position}');
           if(newIndex > oldIndex) {
@@ -229,6 +212,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
           } else {
             debugPrint('new($newIndex): ${items[newIndex].content}-${items[newIndex].position}');
           }
+
           double position = 0.0;
           double a, b = 0.0;
           if(newIndex == 0) { //1.맨 앞으로
@@ -251,12 +235,12 @@ class _TodoItemListState extends State<TodoItemListWidget> {
           TodoItem item = items[oldIndex];
 
           setState(() {
+            item.position = position;
             items.removeAt(oldIndex);
             items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
           });
 
-          TodoItem changedItem = await _changePosition(item.id, item.position);
-          items[newIndex > oldIndex ? newIndex - 1: newIndex] = changedItem;
+           _changePosition(item);
         }
       ),
       floatingActionButton: Builder(
@@ -315,7 +299,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                   Row(
                     mainAxisSize: MainAxisSize.max,
                     children: <Widget>[
-                      FlatButton(
+                      /*FlatButton(
                         child: Text('accesstoken'),
                         onPressed: () {
                           getAccessToken();
@@ -326,11 +310,21 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                         onPressed: () {
                           checkToken();
                         },
+                      ),*/
+                      FlatButton(
+                        child: Text('SSE연결'),
+                        onPressed: () {
+                          setState(() {
+                            _sse();
+                          });
+                        },
                       ),
                       FlatButton(
                         child: Text('아이템목록'),
                         onPressed: () {
-                          //fetchItems();
+                          setState(() {
+                            _fetchItems();
+                          });
                         },
                       ),
                       Expanded(
