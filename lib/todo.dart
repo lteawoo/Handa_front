@@ -7,24 +7,24 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TodoItem {
-  int no;
+  int id;
   String content;
   bool done;
-  //int order;
+  double position;
 
   TodoItem({
-    this.no,
+    this.id,
     this.content,
     this.done,
-    //this.order,
+    this.position,
   });
 
   factory TodoItem.fromJson(Map<String, dynamic> json) {
     return TodoItem(
-      no: json['no'],
+      id: json['id'],
       content: json['content'],
       done: json['done'],
-      //order: json['order']
+      position: json['position'],
     );
   }
 }
@@ -123,7 +123,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
 
     final response = await Future.delayed(Duration(milliseconds: 2000));
 
-    return new TodoItem(no: 1, content: 'test');
+    return new TodoItem(id: 1, content: 'test');
   }
 
   void _addTodoItem(TodoItem todoItem) async {
@@ -146,9 +146,11 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     });
 
     debugPrint(response.body);
+    TodoItem newItem = new TodoItem.fromJson(json.decode(response.body));
+
     if(response.statusCode == 200) {
       setState(() {
-        items.add(todoItem);
+        items.add(newItem);
       });
     }
   }
@@ -157,6 +159,31 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     setState(() {
      items.remove(todoItem);
     });
+  }
+
+  Future<TodoItem> _changePosition(int id, double position) async {
+    String accessToken = await _getAccessTokenFromStorage();
+    if(accessToken == null) {
+      return null;
+    }
+
+    final response = await http.post(
+      'http://localhost:8080/api/item/modifyPosition/$id',
+      headers: {
+        'Authorization' : 'Bearer ' + accessToken,
+        'Content-Type': "application/json;charset=UTF-8",
+        'Accept': "application/json;charset=UTF-8",
+      },
+      body: json.encode({
+        'position': position,
+      }),
+    ).catchError((error) {
+      throw error;
+    });
+
+    debugPrint(response.body);
+
+    return TodoItem.fromJson(json.decode(response.body));
   }
 
   @override
@@ -173,7 +200,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
               key: UniqueKey(),
               child: StatefulBuilder(builder: (context, setState) {
                 return new CheckboxListTile(
-                    title: new Text(item.content),
+                    title: new Text('${item.content} : ${item.position}'),
                     value: item.done != null ? item.done : false,
                     controlAffinity: ListTileControlAffinity.leading,
                     onChanged: (bool val) {
@@ -194,12 +221,42 @@ class _TodoItemListState extends State<TodoItemListWidget> {
               }),
             )
         ],
-        onReorder: (oldIndex, newIndex) {
+        onReorder: (oldIndex, newIndex) async {
+          debugPrint('oldIdx : $oldIndex newIndex : $newIndex');
+          debugPrint('old($oldIndex): ${items[oldIndex].content}-${items[oldIndex].position}');
+          if(newIndex > oldIndex) {
+            debugPrint('new-1($newIndex): ${items[newIndex-1].content}-${items[newIndex-1].position}');
+          } else {
+            debugPrint('new($newIndex): ${items[newIndex].content}-${items[newIndex].position}');
+          }
+          double position = 0.0;
+          double a, b = 0.0;
+          if(newIndex == 0) { //1.맨 앞으로
+            a = 0.0;
+            b = items[newIndex].position;
+          } else if(newIndex == items.length) { //2.맨 뒤로
+            if(items[oldIndex].position == items[newIndex-1].position) { //맨뒤에서 맨뒤로 옮길 시 무시
+              return null;
+            }
+            a = items[newIndex-1].position;
+            b = (a/1000 + 1).floorToDouble() * 1000;
+          } else { //3.사이로
+            a = items[newIndex-1].position;
+            b = items[newIndex].position;
+          }
+          debugPrint('a: $a, b: $b');
+          position = a - (a - b) / 2;
+          debugPrint(position.toString());
+
+          TodoItem item = items[oldIndex];
+
           setState(() {
-            TodoItem item = items[oldIndex];
             items.removeAt(oldIndex);
             items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
           });
+
+          TodoItem changedItem = await _changePosition(item.id, item.position);
+          items[newIndex > oldIndex ? newIndex - 1: newIndex] = changedItem;
         }
       ),
       floatingActionButton: Builder(
