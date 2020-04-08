@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:html';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -43,55 +41,47 @@ class TodoItemListWidget extends StatefulWidget {
 
 class _TodoItemListState extends State<TodoItemListWidget> {
   final List<TodoItem> items = [];
-  bool started = false;
-  DateTime lastModifiedDate;
+  bool started = true;
 
   @override
   void initState() {
     debugPrint('init');
     super.initState();
 
+    swapList();
+    _startTimer();
+  }
+
+
+  @override
+  void dispose() {
+    super.dispose();
+    started = false;
+  }
+
+  void swapList() {
+    //todo progress widget 구현해야함
     Future<List<TodoItem>> f = _fetchItems();
     f.then((list) {
+      debugPrint('swapList then');
       setState(() {
         items.clear();
         items.addAll(list);
-        debugPrint('init list size: ${items.length}');
-        lastModifiedDate = _getLastModifiedDate();
       });
+      return;
     });
+    debugPrint('swapList after');
   }
 
   void _startTimer() {
-    Timer.periodic(Duration(milliseconds: 5000), (timer) {
+    Timer.periodic(Duration(milliseconds: 10000), (timer) {
+      debugPrint('started : $started');
       if(started) {
-        Future<List<TodoItem>> f = _fetchChangedItems();
-        f.then((list) {
-          for(TodoItem baseItem in items) {
-
-          }
-        });
+        swapList();
       } else {
         timer.cancel();
       }
     });
-  }
-
-  DateTime _getLastModifiedDate() {
-    DateTime ret;
-    debugPrint('ret : $ret items size : ${items.length}');
-    for(TodoItem item in items) {
-      debugPrint(item.toString());
-      /*
-      DateTime dt = item.lastModifiedDate;
-      debugPrint('item last date : ${dt.toString()}');
-      if(ret == null || ret.isBefore(item.lastModifiedDate)) {
-        ret = item.lastModifiedDate;
-      }
-       */
-    }
-    debugPrint('lastModifiedDate : $ret');
-    return ret;
   }
 
   Future<String> _getAccessTokenFromStorage() async {
@@ -121,8 +111,8 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     if(response.statusCode == 200) {
       final parsed = jsonDecode(response.body).cast<Map<String, dynamic>>();
       List<TodoItem> list = parsed.map<TodoItem>((json) {
-        debugPrint(DateTime.parse(json['lastModifiedDate']).toString());
-        TodoItem.fromJson(json);
+        debugPrint(json.toString());
+        return TodoItem.fromJson(json);
       }).toList();
       return list;
     } else {
@@ -134,40 +124,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
       return null;
     }
   }
-
-  Future<List<TodoItem>> _fetchChangedItems() async {
-    String accessToken = await _getAccessTokenFromStorage();
-    if(accessToken == null) {
-      return null;
-    }
-    debugPrint('token : ' + accessToken);
-
-    final response = await http.get(
-      'http://localhost:8080/api/item/changedList/$lastModifiedDate',
-      headers: {
-        'Authorization' : 'Bearer ' + accessToken,
-        'Accept': "application/json;charset=UTF-8",
-      },
-    ).catchError((error) {
-      debugPrint(error);
-      throw error;
-    });
-    debugPrint(response.statusCode.toString());
-
-    if(response.statusCode == 200) {
-      final parsed = jsonDecode(response.body).cast<Map<String, dynamic>>();
-      List<TodoItem> list = parsed.map<TodoItem>((json) => TodoItem.fromJson(json)).toList();
-      return list;
-    } else {
-      Map responseMap = jsonDecode(response.body);
-      Scaffold.of(context).hideCurrentSnackBar();
-      Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']),
-      ));
-      return null;
-    }
-  }
-
 
   Future<TodoItem> _fetchItem() async {
     String accessToken = await _getAccessTokenFromStorage();
@@ -202,7 +158,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     if(response.statusCode == 200) {
       setState(() {
         items.add(newItem);
-        lastModifiedDate = _getLastModifiedDate();
       });
     }
   }
@@ -236,25 +191,8 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     debugPrint(response.body);
   }
 
-  void _sse() async {
-    final EventSource es = EventSource(
-        'http://localhost:8080/api/item/sse');
-
-    Stream<MessageEvent> stream = es.onMessage;
-    stream.listen((event) {
-     debugPrint(event.toString());
-    },
-    onDone: () {
-      debugPrint("on done");
-    },
-    onError: () {
-      debugPrint("on error");
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    debugPrint('items : ${items.length}');
     return Scaffold(
       appBar: AppBar(
         title: Text('Handa'),
@@ -324,7 +262,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
           });
 
            _changePosition(item);
-          lastModifiedDate = _getLastModifiedDate();
         }
       ),
       floatingActionButton: Builder(
@@ -389,15 +326,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                         onPressed: () {
                           setState(() {
                             _fetchItems();
-                          });
-                        },
-                      ),
-                      FlatButton(
-                        child: Text('아이템최신목록'),
-                        onPressed: () {
-                          setState(() {
-                            debugPrint(lastModifiedDate.toString());
-                            _fetchChangedItems();
                           });
                         },
                       ),
