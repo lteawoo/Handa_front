@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:html';
 
@@ -12,12 +13,14 @@ class TodoItem {
   String content;
   bool done;
   double position;
+  DateTime lastModifiedDate;
 
   TodoItem({
     this.id,
     this.content,
     this.done,
     this.position,
+    this.lastModifiedDate,
   });
 
   factory TodoItem.fromJson(Map<String, dynamic> json) {
@@ -26,8 +29,11 @@ class TodoItem {
       content: json['content'],
       done: json['done'],
       position: json['position'],
+      lastModifiedDate: DateTime.parse(json['lastModifiedDate']),
     );
   }
+
+  toString() => 'id: $id, content: $content, done: $done, position: $position, lastModifiedDate: $lastModifiedDate';
 }
 
 class TodoItemListWidget extends StatefulWidget {
@@ -37,12 +43,55 @@ class TodoItemListWidget extends StatefulWidget {
 
 class _TodoItemListState extends State<TodoItemListWidget> {
   final List<TodoItem> items = [];
+  bool started = false;
+  DateTime lastModifiedDate;
 
   @override
   void initState() {
     debugPrint('init');
     super.initState();
-    _fetchItems();
+
+    Future<List<TodoItem>> f = _fetchItems();
+    f.then((list) {
+      setState(() {
+        items.clear();
+        items.addAll(list);
+        debugPrint('init list size: ${items.length}');
+        lastModifiedDate = _getLastModifiedDate();
+      });
+    });
+  }
+
+  void _startTimer() {
+    Timer.periodic(Duration(milliseconds: 5000), (timer) {
+      if(started) {
+        Future<List<TodoItem>> f = _fetchChangedItems();
+        f.then((list) {
+          for(TodoItem baseItem in items) {
+
+          }
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  DateTime _getLastModifiedDate() {
+    DateTime ret;
+    debugPrint('ret : $ret items size : ${items.length}');
+    for(TodoItem item in items) {
+      debugPrint(item.toString());
+      /*
+      DateTime dt = item.lastModifiedDate;
+      debugPrint('item last date : ${dt.toString()}');
+      if(ret == null || ret.isBefore(item.lastModifiedDate)) {
+        ret = item.lastModifiedDate;
+      }
+       */
+    }
+    debugPrint('lastModifiedDate : $ret');
+    return ret;
   }
 
   Future<String> _getAccessTokenFromStorage() async {
@@ -50,10 +99,10 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     return prefs.getString('access_token');
   }
 
-  void _fetchItems() async {
+  Future<List<TodoItem>> _fetchItems() async {
     String accessToken = await _getAccessTokenFromStorage();
     if(accessToken == null) {
-      return;
+      return null;
     }
     debugPrint('token : ' + accessToken);
 
@@ -71,11 +120,44 @@ class _TodoItemListState extends State<TodoItemListWidget> {
 
     if(response.statusCode == 200) {
       final parsed = jsonDecode(response.body).cast<Map<String, dynamic>>();
+      List<TodoItem> list = parsed.map<TodoItem>((json) {
+        debugPrint(DateTime.parse(json['lastModifiedDate']).toString());
+        TodoItem.fromJson(json);
+      }).toList();
+      return list;
+    } else {
+      Map responseMap = jsonDecode(response.body);
+      Scaffold.of(context).hideCurrentSnackBar();
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']),
+      ));
+      return null;
+    }
+  }
+
+  Future<List<TodoItem>> _fetchChangedItems() async {
+    String accessToken = await _getAccessTokenFromStorage();
+    if(accessToken == null) {
+      return null;
+    }
+    debugPrint('token : ' + accessToken);
+
+    final response = await http.get(
+      'http://localhost:8080/api/item/changedList/$lastModifiedDate',
+      headers: {
+        'Authorization' : 'Bearer ' + accessToken,
+        'Accept': "application/json;charset=UTF-8",
+      },
+    ).catchError((error) {
+      debugPrint(error);
+      throw error;
+    });
+    debugPrint(response.statusCode.toString());
+
+    if(response.statusCode == 200) {
+      final parsed = jsonDecode(response.body).cast<Map<String, dynamic>>();
       List<TodoItem> list = parsed.map<TodoItem>((json) => TodoItem.fromJson(json)).toList();
-      setState(() {
-        items.clear();
-        items.addAll(list);
-      });
+      return list;
     } else {
       Map responseMap = jsonDecode(response.body);
       Scaffold.of(context).hideCurrentSnackBar();
@@ -120,6 +202,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     if(response.statusCode == 200) {
       setState(() {
         items.add(newItem);
+        lastModifiedDate = _getLastModifiedDate();
       });
     }
   }
@@ -241,6 +324,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
           });
 
            _changePosition(item);
+          lastModifiedDate = _getLastModifiedDate();
         }
       ),
       floatingActionButton: Builder(
@@ -267,6 +351,7 @@ class _TodoItemListState extends State<TodoItemListWidget> {
       }
 
       _addTodoItem(new TodoItem(content: input, done: false));
+
       debugPrint('submitted, you typed $input');
     }
 
@@ -299,31 +384,20 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                   Row(
                     mainAxisSize: MainAxisSize.max,
                     children: <Widget>[
-                      /*FlatButton(
-                        child: Text('accesstoken'),
-                        onPressed: () {
-                          getAccessToken();
-                        },
-                      ),
-                      FlatButton(
-                        child: Text('checktoken'),
-                        onPressed: () {
-                          checkToken();
-                        },
-                      ),*/
-                      FlatButton(
-                        child: Text('SSE연결'),
-                        onPressed: () {
-                          setState(() {
-                            _sse();
-                          });
-                        },
-                      ),
                       FlatButton(
                         child: Text('아이템목록'),
                         onPressed: () {
                           setState(() {
                             _fetchItems();
+                          });
+                        },
+                      ),
+                      FlatButton(
+                        child: Text('아이템최신목록'),
+                        onPressed: () {
+                          setState(() {
+                            debugPrint(lastModifiedDate.toString());
+                            _fetchChangedItems();
                           });
                         },
                       ),
@@ -351,58 +425,4 @@ class _TodoItemListState extends State<TodoItemListWidget> {
       submit('close');
     });
   }
-
-  void getAccessToken() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String username = 'test@taeu.kr';
-    String password = '12345';
-    String uri = "http://localhost:8080/oauth/token?grant_type=password&username=$username&password=$password";
-    String clientId = "taeu_client";
-    String clientPw = "taeu_secret";
-    String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
-    debugPrint(authorization);
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Authorization': authorization,
-      },
-    ).catchError((error) {
-      debugPrint(error.toString());
-      throw error;
-    });
-
-    debugPrint(response.body);
-    Map responseMap = jsonDecode(response.body);
-    prefs.setString('access_token', responseMap['access_token']);
-  }
-
-  void checkToken() async {
-//    SharedPreferences prefs = await SharedPreferences.getInstance();
-//    String token = prefs.getString('access_token');
-    String token = await _getAccessTokenFromStorage();
-    if (token == null || token.isEmpty) {
-      debugPrint('token is null');
-      return;
-    }
-    String clientId = "taeu_client";
-    String clientPw = "taeu_secret";
-    String authorization = "Basic " +
-        base64Encode(utf8.encode('$clientId:$clientPw'));
-    String uri = 'http://localhost:8080/oauth/check_token?token=$token';
-    debugPrint(authorization + ', ' + uri);
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Authorization': authorization,
-      },
-    ).catchError((error) {
-      debugPrint(error.toString());
-      throw error;
-    });
-
-    debugPrint(response.body);
-  }
-
 }
