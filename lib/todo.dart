@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'layout/adaptive.dart';
+
 class TodoItem {
   int id;
   String content;
@@ -175,10 +177,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     }
   }
 
-  void _deleteTodoItem(TodoItem todoItem) {
-    _removeTodoItem(todoItem);
-  }
-
   void _changePosition(TodoItem todoItem) async {
     String accessToken = await _getAccessTokenFromStorage();
     if(accessToken == null) {
@@ -204,75 +202,90 @@ class _TodoItemListState extends State<TodoItemListWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = isDisplayDesktop(context);
+    final desktopMaxWidth = 400.0;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Handa'),
-      ),
-      body: ReorderableListView(
-        children: [
-          for (final item in items)
-            Card(
-              key: UniqueKey(),
-              child: StatefulBuilder(builder: (context, setState) {
-                return new CheckboxListTile(
-                    title: new Text('${item.content} : ${item.position}'),
-                    value: item.done != null ? item.done : false,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (bool val) {
-                      setState(() {
-                        item.done = val;
-                      });
-                    },
-                    secondary: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () {
-                        setState(() {
-                          _deleteTodoItem(item);
-                        });
-                      },
-                    )
-                );
-              }),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _TopBar(),
+            Expanded(
+              child: ReorderableListView(
+                  children: [
+                    for (final item in items)
+                      Container(
+                        key: UniqueKey(),
+                        decoration: BoxDecoration(
+                            border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.black26,
+                                  width: 1.0,
+                                )
+                            )
+                        ),
+                        child: StatefulBuilder(builder: (context, setState) {
+                          return new CheckboxListTile(
+                              title: new Text('${item.content}'),
+                              value: item.done != null ? item.done : false,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              onChanged: (bool val) {
+                                setState(() {
+                                  item.done = val;
+                                });
+                              },
+                              secondary: IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () {
+                                  _removeTodoItem(item);
+                                },
+                              )
+                          );
+                        }),
+                      )
+                  ],
+                  onReorder: (oldIndex, newIndex) {
+                    debugPrint('oldIdx : $oldIndex newIndex : $newIndex');
+                    debugPrint('old($oldIndex): ${items[oldIndex].content}-${items[oldIndex].position}');
+                    if(newIndex > oldIndex) {
+                      debugPrint('new-1($newIndex): ${items[newIndex-1].content}-${items[newIndex-1].position}');
+                    } else {
+                      debugPrint('new($newIndex): ${items[newIndex].content}-${items[newIndex].position}');
+                    }
+
+                    double position = 0.0;
+                    double a, b = 0.0;
+                    if(newIndex == 0) { //1.맨 앞으로
+                      a = 0.0;
+                      b = items[newIndex].position;
+                    } else if(newIndex == items.length) { //2.맨 뒤로
+                      if(items[oldIndex].position == items[newIndex-1].position) { //맨뒤에서 맨뒤로 옮길 시 무시
+                        return null;
+                      }
+                      a = items[newIndex-1].position;
+                      b = (a/1000 + 1).floorToDouble() * 1000;
+                    } else { //3.사이로
+                      a = items[newIndex-1].position;
+                      b = items[newIndex].position;
+                    }
+                    debugPrint('a: $a, b: $b');
+                    position = a - (a - b) / 2;
+                    debugPrint(position.toString());
+
+                    TodoItem item = items[oldIndex];
+
+                    setState(() {
+                      item.position = position;
+                      items.removeAt(oldIndex);
+                      items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
+                    });
+
+                    _changePosition(item);
+                  }
+              ),
             )
-        ],
-        onReorder: (oldIndex, newIndex) {
-          debugPrint('oldIdx : $oldIndex newIndex : $newIndex');
-          debugPrint('old($oldIndex): ${items[oldIndex].content}-${items[oldIndex].position}');
-          if(newIndex > oldIndex) {
-            debugPrint('new-1($newIndex): ${items[newIndex-1].content}-${items[newIndex-1].position}');
-          } else {
-            debugPrint('new($newIndex): ${items[newIndex].content}-${items[newIndex].position}');
-          }
-
-          double position = 0.0;
-          double a, b = 0.0;
-          if(newIndex == 0) { //1.맨 앞으로
-            a = 0.0;
-            b = items[newIndex].position;
-          } else if(newIndex == items.length) { //2.맨 뒤로
-            if(items[oldIndex].position == items[newIndex-1].position) { //맨뒤에서 맨뒤로 옮길 시 무시
-              return null;
-            }
-            a = items[newIndex-1].position;
-            b = (a/1000 + 1).floorToDouble() * 1000;
-          } else { //3.사이로
-            a = items[newIndex-1].position;
-            b = items[newIndex].position;
-          }
-          debugPrint('a: $a, b: $b');
-          position = a - (a - b) / 2;
-          debugPrint(position.toString());
-
-          TodoItem item = items[oldIndex];
-
-          setState(() {
-            item.position = position;
-            items.removeAt(oldIndex);
-            items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
-          });
-
-           _changePosition(item);
-        }
+          ],
+        ),
       ),
       floatingActionButton: Builder(
         builder: (context) => FloatingActionButton(
@@ -281,6 +294,25 @@ class _TodoItemListState extends State<TodoItemListWidget> {
             _showModalBottomSheet(context);
           },
         ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        color: Theme.of(context).primaryColor,
+        shape: const CircularNotchedRectangle(),
+        child: IconTheme(
+          data: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
+          child: Row(
+            children: [
+              IconButton(
+                  tooltip: '메뉴',
+                  icon: const Icon(Icons.menu),
+                  onPressed: () {
+                    debugPrint('menu pressed');
+                  }
+              ),
+            ],
+          ),
+        )
       ),
     );
   }
@@ -331,14 +363,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                   Row(
                     mainAxisSize: MainAxisSize.max,
                     children: <Widget>[
-                      FlatButton(
-                        child: Text('아이템목록'),
-                        onPressed: () {
-                          setState(() {
-                            _fetchItems();
-                          });
-                        },
-                      ),
                       Expanded(
                         child: Align(
                           alignment: Alignment.bottomRight,
@@ -362,5 +386,44 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     ).whenComplete(() {
       submit('close');
     });
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  const _TopBar({
+    Key key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = const SizedBox(width: 30);
+    return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 8),
+        padding: EdgeInsets.symmetric(horizontal: 30),
+        child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ExcludeSemantics(
+                      child: SizedBox(
+                          height: 80
+                      )
+                  ),
+                  spacing,
+                  Text(
+                      'Handa',
+                      style: Theme.of(context).textTheme.bodyText1.copyWith(
+                        fontSize: 35,
+                        fontWeight: FontWeight.w600,
+                      )
+                  ),
+                ],
+              ),
+            ]
+        )
+    );
   }
 }
