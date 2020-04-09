@@ -6,8 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'layout/adaptive.dart';
-
 class TodoItem {
   int id;
   String content;
@@ -36,12 +34,127 @@ class TodoItem {
   toString() => 'id: $id, content: $content, done: $done, position: $position, lastModifiedDate: $lastModifiedDate';
 }
 
-class TodoItemListWidget extends StatefulWidget {
+class Todo extends StatefulWidget {
   @override
-  _TodoItemListState createState() => _TodoItemListState();
+  _TodoState createState() => _TodoState();
 }
 
-class _TodoItemListState extends State<TodoItemListWidget> {
+class _TodoState extends State<Todo> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: SafeArea(
+        child: Column(
+          children: [
+            _TopBar(),
+            Expanded(
+              child: TodoItemList(),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: Builder(
+        builder: (context) => FloatingActionButton(
+          child: Icon(Icons.add),
+          onPressed: () {
+            _showModalBottomSheet(context);
+          },
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+          color: Theme.of(context).primaryColor,
+          shape: const CircularNotchedRectangle(),
+          child: IconTheme(
+            data: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
+            child: Row(
+              children: [
+                IconButton(
+                    tooltip: '메뉴',
+                    icon: const Icon(Icons.menu),
+                    onPressed: () {
+                      debugPrint('menu pressed');
+                    }
+                ),
+              ],
+            ),
+          )
+      ),
+    );
+  }
+
+  void _showModalBottomSheet(BuildContext context) {
+    TextEditingController _controller = TextEditingController();
+
+    submit(String where) {
+      final String input = _controller.text.trim();
+      debugPrint('$where, request submit, you typed $input');
+
+      if(input == '') {
+        debugPrint('$where, you typed blank pass');
+        return;
+      }
+
+      _addTodoItem(new TodoItem(content: input, done: false));
+
+      debugPrint('submitted, you typed $input');
+    }
+
+    showModalBottomSheet<void>(
+      enableDrag: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      isScrollControlled: true,
+      context: context,
+      builder: (BuildContext context) {
+        return SingleChildScrollView(
+            padding: EdgeInsets.all(10.0),
+            child: Container(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  TextField(
+                    textInputAction: TextInputAction.done,
+                    autofocus: true,
+                    minLines: 1,
+                    maxLines: 3,
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: '무엇을 할건가요?',
+                      border: InputBorder.none,
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.max,
+                    children: <Widget>[
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.bottomRight,
+                          child: FlatButton.icon(
+                            textColor: Theme.of(context).primaryColor,//Theme.of(context).textTheme.button.color,
+                            icon: const Icon(Icons.add, size: 18),
+                            label: Text('등록'),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ),
+                      )
+                    ],
+                  )
+                ],
+              ),
+            )
+        );
+      },
+    ).whenComplete(() {
+      submit('close');
+    });
+  }
+}
+class TodoItemList extends StatelessWidget {
   final List<TodoItem> items = [];
   bool started = true;
 
@@ -202,190 +315,78 @@ class _TodoItemListState extends State<TodoItemListWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = isDisplayDesktop(context);
-    final desktopMaxWidth = 400.0;
-
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _TopBar(),
-            Expanded(
-              child: ReorderableListView(
-                  children: [
-                    for (final item in items)
-                      Container(
-                        key: UniqueKey(),
-                        decoration: BoxDecoration(
-                            border: Border(
-                                bottom: BorderSide(
-                                  color: Colors.black26,
-                                  width: 1.0,
-                                )
-                            )
-                        ),
-                        child: StatefulBuilder(builder: (context, setState) {
-                          return new CheckboxListTile(
-                              title: new Text('${item.content}'),
-                              value: item.done != null ? item.done : false,
-                              controlAffinity: ListTileControlAffinity.leading,
-                              onChanged: (bool val) {
-                                setState(() {
-                                  item.done = val;
-                                });
-                              },
-                              secondary: IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () {
-                                  _removeTodoItem(item);
-                                },
-                              )
-                          );
-                        }),
+    return ReorderableListView(
+        children: [
+          for (final item in items)
+            Container(
+              key: UniqueKey(),
+              decoration: BoxDecoration(
+                  border: Border(
+                      bottom: BorderSide(
+                        color: Colors.black26,
+                        width: 1.0,
                       )
-                  ],
-                  onReorder: (oldIndex, newIndex) {
-                    debugPrint('oldIdx : $oldIndex newIndex : $newIndex');
-                    debugPrint('old($oldIndex): ${items[oldIndex].content}-${items[oldIndex].position}');
-                    if(newIndex > oldIndex) {
-                      debugPrint('new-1($newIndex): ${items[newIndex-1].content}-${items[newIndex-1].position}');
-                    } else {
-                      debugPrint('new($newIndex): ${items[newIndex].content}-${items[newIndex].position}');
-                    }
-
-                    double position = 0.0;
-                    double a, b = 0.0;
-                    if(newIndex == 0) { //1.맨 앞으로
-                      a = 0.0;
-                      b = items[newIndex].position;
-                    } else if(newIndex == items.length) { //2.맨 뒤로
-                      if(items[oldIndex].position == items[newIndex-1].position) { //맨뒤에서 맨뒤로 옮길 시 무시
-                        return null;
-                      }
-                      a = items[newIndex-1].position;
-                      b = (a/1000 + 1).floorToDouble() * 1000;
-                    } else { //3.사이로
-                      a = items[newIndex-1].position;
-                      b = items[newIndex].position;
-                    }
-                    debugPrint('a: $a, b: $b');
-                    position = a - (a - b) / 2;
-                    debugPrint(position.toString());
-
-                    TodoItem item = items[oldIndex];
-
-                    setState(() {
-                      item.position = position;
-                      items.removeAt(oldIndex);
-                      items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
-                    });
-
-                    _changePosition(item);
-                  }
-              ),
-            )
-          ],
-        ),
-      ),
-      floatingActionButton: Builder(
-        builder: (context) => FloatingActionButton(
-          child: Icon(Icons.add),
-          onPressed: () {
-            _showModalBottomSheet(context);
-          },
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: Theme.of(context).primaryColor,
-        shape: const CircularNotchedRectangle(),
-        child: IconTheme(
-          data: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
-          child: Row(
-            children: [
-              IconButton(
-                  tooltip: '메뉴',
-                  icon: const Icon(Icons.menu),
-                  onPressed: () {
-                    debugPrint('menu pressed');
-                  }
-              ),
-            ],
-          ),
-        )
-      ),
-    );
-  }
-
-  void _showModalBottomSheet(BuildContext context) {
-    TextEditingController _controller = TextEditingController();
-
-    submit(String where) {
-      final String input = _controller.text.trim();
-      debugPrint('$where, request submit, you typed $input');
-
-      if(input == '') {
-        debugPrint('$where, you typed blank pass');
-        return;
-      }
-
-      _addTodoItem(new TodoItem(content: input, done: false));
-
-      debugPrint('submitted, you typed $input');
-    }
-
-    showModalBottomSheet<void>(
-      enableDrag: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-      ),
-      isScrollControlled: true,
-      context: context,
-      builder: (BuildContext context) {
-        return SingleChildScrollView(
-            padding: EdgeInsets.all(10.0),
-            child: Container(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  TextField(
-                    textInputAction: TextInputAction.done,
-                    autofocus: true,
-                    minLines: 1,
-                    maxLines: 3,
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: '무엇을 할건가요?',
-                      border: InputBorder.none,
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.max,
-                    children: <Widget>[
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.bottomRight,
-                          child: FlatButton.icon(
-                            textColor: Theme.of(context).primaryColor,//Theme.of(context).textTheme.button.color,
-                            icon: const Icon(Icons.add, size: 18),
-                            label: Text('등록'),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ),
-                      )
-                    ],
                   )
-                ],
               ),
+              child: StatefulBuilder(builder: (context, setState) {
+                return new CheckboxListTile(
+                    title: new Text('${item.content}'),
+                    value: item.done != null ? item.done : false,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    onChanged: (bool val) {
+                      setState(() {
+                        item.done = val;
+                      });
+                    },
+                    secondary: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        _removeTodoItem(item);
+                      },
+                    )
+                );
+              }),
             )
-        );
-      },
-    ).whenComplete(() {
-      submit('close');
-    });
+        ],
+        onReorder: (oldIndex, newIndex) {
+          debugPrint('oldIdx : $oldIndex newIndex : $newIndex');
+          debugPrint('old($oldIndex): ${items[oldIndex].content}-${items[oldIndex].position}');
+          if(newIndex > oldIndex) {
+            debugPrint('new-1($newIndex): ${items[newIndex-1].content}-${items[newIndex-1].position}');
+          } else {
+            debugPrint('new($newIndex): ${items[newIndex].content}-${items[newIndex].position}');
+          }
+
+          double position = 0.0;
+          double a, b = 0.0;
+          if(newIndex == 0) { //1.맨 앞으로
+            a = 0.0;
+            b = items[newIndex].position;
+          } else if(newIndex == items.length) { //2.맨 뒤로
+            if(items[oldIndex].position == items[newIndex-1].position) { //맨뒤에서 맨뒤로 옮길 시 무시
+              return null;
+            }
+            a = items[newIndex-1].position;
+            b = (a/1000 + 1).floorToDouble() * 1000;
+          } else { //3.사이로
+            a = items[newIndex-1].position;
+            b = items[newIndex].position;
+          }
+          debugPrint('a: $a, b: $b');
+          position = a - (a - b) / 2;
+          debugPrint(position.toString());
+
+          TodoItem item = items[oldIndex];
+
+          setState(() {
+            item.position = position;
+            items.removeAt(oldIndex);
+            items.insert(newIndex > oldIndex ? newIndex - 1: newIndex, item);
+          });
+
+          _changePosition(item);
+        }
+    );
   }
 }
 

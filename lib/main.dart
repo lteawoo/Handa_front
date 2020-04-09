@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'Handa',
       initialRoute: '/sign_in',
       routes: {
-        '/home': (BuildContext context) => TodoItemListWidget(),
+        '/home': (BuildContext context) => Todo(),
         '/sign_in': (BuildContext context) => SignIn(),
         '/sign_up': (BuildContext context) => SignUp(),
       }
