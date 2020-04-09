@@ -52,7 +52,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     _startTimer();
   }
 
-
   @override
   void dispose() {
     super.dispose();
@@ -125,14 +124,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
     }
   }
 
-  Future<TodoItem> _fetchItem() async {
-    String accessToken = await _getAccessTokenFromStorage();
-
-    final response = await Future.delayed(Duration(milliseconds: 2000));
-
-    return new TodoItem(id: 1, content: 'test');
-  }
-
   void _addTodoItem(TodoItem todoItem) async {
     String accessToken = await _getAccessTokenFromStorage();
     if(accessToken == null) {
@@ -161,11 +152,31 @@ class _TodoItemListState extends State<TodoItemListWidget> {
       });
     }
   }
+  void _removeTodoItem(TodoItem todoItem) async {
+    debugPrint("delete");
+    String accessToken = await _getAccessTokenFromStorage();
+    if(accessToken == null) {
+      return;
+    }
+    final response = await http.delete(
+      'http://localhost:8080/api/item/delete/${todoItem.id}',
+      headers: {
+        'Authorization' : 'Bearer ' + accessToken,
+        'Accept': "application/json;charset=UTF-8",
+      },
+    ).catchError((error) {
+      throw error;
+    });
+
+    if(response.statusCode == 200) {
+      setState(() {
+        items.remove(todoItem);
+      });
+    }
+  }
 
   void _deleteTodoItem(TodoItem todoItem) {
-    setState(() {
-     items.remove(todoItem);
-    });
+    _removeTodoItem(todoItem);
   }
 
   void _changePosition(TodoItem todoItem) async {
@@ -216,7 +227,6 @@ class _TodoItemListState extends State<TodoItemListWidget> {
                       icon: const Icon(Icons.delete),
                       onPressed: () {
                         setState(() {
-                          debugPrint("delete");
                           _deleteTodoItem(item);
                         });
                       },
