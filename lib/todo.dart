@@ -91,7 +91,6 @@ class _TodoState extends State<Todo> {
       debugPrint('$where, request submit, you typed $input');
 
       if(input == '') {
-        debugPrint('$where, you typed blank pass');
         return;
       }
 
