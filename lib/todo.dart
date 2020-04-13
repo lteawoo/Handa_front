@@ -145,10 +145,10 @@ class _TodoState extends State<Todo> {
       throw error;
     });
 
-    debugPrint(response.body);
-    TodoItem newItem = new TodoItem.fromJson(json.decode(response.body));
-
     if(response.statusCode == 200) {
+      debugPrint(response.body);
+      TodoItem newItem = new TodoItem.fromJson(json.decode(response.body));
+
       setState(() {
         items.add(newItem);
       });
@@ -174,6 +174,32 @@ class _TodoState extends State<Todo> {
       setState(() {
         items.remove(todoItem);
       });
+    }
+  }
+
+  void _doneTodoItem(TodoItem todoItem, bool val) async {
+    debugPrint("done");
+    String accessToken = await _getAccessTokenFromStorage();
+    if(accessToken == null) {
+      return;
+    }
+    final response = await http.post(
+      'http://localhost:8080/api/item/modifyDone/${todoItem.id}',
+      headers: {
+        'Authorization' : 'Bearer ' + accessToken,
+        'Content-Type': "application/json;charset=UTF-8",
+        'Accept': "application/json;charset=UTF-8",
+      },
+      body: json.encode({
+        'done': val,
+      }),
+    ).catchError((error) {
+      throw error;
+    });
+
+    if(response.statusCode == 200) {
+      debugPrint(response.body);
+      TodoItem changedItem = new TodoItem.fromJson(json.decode(response.body));
     }
   }
 
@@ -250,6 +276,7 @@ class _TodoState extends State<Todo> {
               child: TodoItemList(
                 items: items,
                 onDeletePressed: _removeTodoItem,
+                onCheckBoxPressed: _doneTodoItem,
                 onReorder: onReorder,
               ),
             ),
@@ -359,12 +386,14 @@ class _TodoState extends State<Todo> {
 class TodoItemList extends StatelessWidget {
   final List<TodoItem> items;
   final Function onDeletePressed;
+  final Function onCheckBoxPressed;
   final ReorderCallback onReorder;
 
   const TodoItemList({
     Key key,
     @required this.items,
     @required this.onDeletePressed,
+    @required this.onCheckBoxPressed,
     @required this.onReorder,
   }) : super(key: key);
 
@@ -389,9 +418,7 @@ class TodoItemList extends StatelessWidget {
                     value: item.done != null ? item.done : false,
                     controlAffinity: ListTileControlAffinity.leading,
                     onChanged: (bool val) {
-                      setState(() {
-                        item.done = val;
-                      });
+                      onCheckBoxPressed(item, val);
                     },
                     secondary: IconButton(
                       icon: const Icon(Icons.delete),
