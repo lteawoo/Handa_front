@@ -178,6 +178,7 @@ class _TodoState extends State<Todo> {
   }
 
   void _doneTodoItem(TodoItem todoItem, bool val) async {
+    //todo done완료하자..
     debugPrint("done");
     String accessToken = await _getAccessTokenFromStorage();
     if(accessToken == null) {
