@@ -419,7 +419,10 @@ class TodoItemList extends StatelessWidget {
                     value: item.done != null ? item.done : false,
                     controlAffinity: ListTileControlAffinity.leading,
                     onChanged: (bool val) {
-                      onCheckBoxPressed(item, val);
+                      setState(() {
+                        item.done = val;
+                      });
+                      //onCheckBoxPressed(item, val);
                     },
                     secondary: IconButton(
                       icon: const Icon(Icons.delete),
