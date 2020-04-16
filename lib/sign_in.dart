@@ -16,14 +16,14 @@ class Member {
   });
 
   Map<String, dynamic> toJson() =>
-      {
-        'email': {
-          'value': email,
-        },
-        'password': {
-          'value': password,
-        },
-      };
+    {
+      'email': {
+        'value': email,
+      },
+      'password': {
+        'value': password,
+      },
+    };
 }
 
 class SignIn extends StatefulWidget {
