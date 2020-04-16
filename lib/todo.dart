@@ -54,8 +54,8 @@ class _TodoState extends State<Todo> {
 
   @override
   void dispose() {
-    super.dispose();
     started = false;
+    super.dispose();
   }
 
   void _swapList() {
@@ -88,6 +88,11 @@ class _TodoState extends State<Todo> {
   Future<String> _getAccessTokenFromStorage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
+  }
+
+  Future<bool> _removeAccessTokenFromStorage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.remove('access_token');
   }
 
   Future<List<TodoItem>> _fetchItems() async {
@@ -178,7 +183,6 @@ class _TodoState extends State<Todo> {
   }
 
   Future<TodoItem> _doneTodoItem(TodoItem todoItem, bool val) async {
-    //todo done완료하자..
     debugPrint("done");
     String accessToken = await _getAccessTokenFromStorage();
     if(accessToken == null) {
@@ -290,7 +294,7 @@ class _TodoState extends State<Todo> {
         builder: (context) => FloatingActionButton(
           child: Icon(Icons.add),
           onPressed: () {
-            _showModalBottomSheet(context);
+            _showInputModalBottomSheet(context);
           },
         ),
       ),
@@ -306,7 +310,7 @@ class _TodoState extends State<Todo> {
                     tooltip: '메뉴',
                     icon: const Icon(Icons.menu),
                     onPressed: () {
-                      debugPrint('menu pressed');
+                      _showMenuModalBottomSheet(context);
                     }
                 ),
               ],
@@ -316,7 +320,38 @@ class _TodoState extends State<Todo> {
     );
   }
 
-  void _showModalBottomSheet(BuildContext context) {
+  void _showMenuModalBottomSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      enableDrag: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      isScrollControlled: true,
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                enabled: true,
+                title: Text('SIGN OUT'),
+                onTap:(() {
+                  _removeAccessTokenFromStorage().then((bool) {
+                    if(bool) {
+                      Navigator.pushNamedAndRemoveUntil(context, '/sign_in', ModalRoute.withName('/home'));
+                    }
+                  });
+                }),
+              ),
+            ],
+          )
+        );
+      },
+    );
+  }
+
+  void _showInputModalBottomSheet(BuildContext context) {
     TextEditingController _textEditingController = TextEditingController();
 
     submit(String where) {
