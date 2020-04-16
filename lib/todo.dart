@@ -177,12 +177,12 @@ class _TodoState extends State<Todo> {
     }
   }
 
-  void _doneTodoItem(TodoItem todoItem, bool val) async {
+  Future<TodoItem> _doneTodoItem(TodoItem todoItem, bool val) async {
     //todo done완료하자..
     debugPrint("done");
     String accessToken = await _getAccessTokenFromStorage();
     if(accessToken == null) {
-      return;
+      return null;
     }
     final response = await http.post(
       'http://localhost:8080/api/item/modifyDone/${todoItem.id}',
@@ -200,7 +200,9 @@ class _TodoState extends State<Todo> {
 
     if(response.statusCode == 200) {
       debugPrint(response.body);
-      TodoItem changedItem = new TodoItem.fromJson(json.decode(response.body));
+      return new TodoItem.fromJson(json.decode(response.body));
+    } else {
+      return null;
     }
   }
 
@@ -419,10 +421,12 @@ class TodoItemList extends StatelessWidget {
                     value: item.done != null ? item.done : false,
                     controlAffinity: ListTileControlAffinity.leading,
                     onChanged: (bool val) {
-                      setState(() {
-                        item.done = val;
+                      Future<TodoItem> f = onCheckBoxPressed(item, val);
+                      f.then((changedItem) {
+                        setState(() {
+                          item.done = changedItem.done;
+                        });
                       });
-                      //onCheckBoxPressed(item, val);
                     },
                     secondary: IconButton(
                       icon: const Icon(Icons.delete),
