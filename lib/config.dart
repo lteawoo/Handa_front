@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class ConfigItem {
@@ -21,19 +20,17 @@ class ConfigItem {
 }
 
 class ConfigLoader {
-  Future<List<ConfigItem>> load() async {
+  static Future<Map<String, dynamic>> load() async {
     final String data = await rootBundle.loadString('assets/config.json');
-    final parsed = json.decode(data).cast<Map<String, dynamic>>();
-/*    final List<ConfigItem> list = parsed.map<ConfigItem>((json) {
-          debugPrint(json);
-          return ConfigItem.fromJson(json);
-        }).toList();*/
+    final Map<String, dynamic> parsed = json.decode(data);
 
-    return null;
+    return parsed;
   }
-/*  static Future<String> get(String name) async {
-    List<ConfigItem> list = await load();
 
-    return "";
-  }*/
+  static Future<String> get(String key) async {
+    final String data = await rootBundle.loadString('assets/config.json');
+    final Map<String, dynamic> parsed = json.decode(data);
+
+    return parsed[key];
+  }
 }

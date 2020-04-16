@@ -7,7 +7,10 @@ import 'config.dart';
 
 
 //void main() => runApp(MyApp());
-void main() => runApp(Test());
+void main() {
+  //WidgetsFlutterBinding.ensureInitialized();
+  runApp(Test());
+}
 
 class Test extends StatelessWidget {
   @override
@@ -20,9 +23,7 @@ class Test extends StatelessWidget {
             FlatButton(
               child: Text('Press'),
               onPressed: (() {
-                //ConfigLoader.get('server_address');
-                ConfigLoader loadder = ConfigLoader();
-                loadder.load();
+                ConfigLoader.get('server_address').then((value) => debugPrint(value));
               }),
             )
           ],
