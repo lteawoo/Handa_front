@@ -3,33 +3,13 @@ import 'dart:convert';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:handa/auth/sign_up_request.dart';
 import 'package:handa/layout/adaptive.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 
-class Member {
-  String email;
-  String name;
-  String password;
-
-  Member({
-    this.email,
-    this.name,
-    this.password,
-  });
-
-  Map<String, dynamic> toJson() =>
-      {
-        'email': {
-          'value': email,
-        },
-        'name': {
-          'value': name,
-        },
-        'password': {
-          'value': password,
-        },
-      };
-}
+import 'auth/auth.dart';
+import 'config.dart';
 
 class SignUp extends StatefulWidget {
   @override
@@ -53,42 +33,8 @@ class MainView extends StatefulWidget {
 }
 
 class _MainViewState extends State<MainView> {
-  final Member member = Member();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<FormFieldState> _passwordFieldKey = GlobalKey<FormFieldState>();
-
-  void _signUp(BuildContext context) async {
-    if(!_formKey.currentState.validate()) {
-      return;
-    }
-
-    String uri = "http://localhost:8080/member/signup";
-    String body = json.encode(member);
-    debugPrint(body);
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Content-Type': "application/json;charset=UTF-8",
-        'Accept': "application/json;charset=UTF-8",
-      },
-      body: body,
-    ).catchError((error) {
-      debugPrint(error.toString());
-      throw error;
-    }).then((response) {
-      Map responseMap = jsonDecode(response.body);
-
-      debugPrint(response.statusCode.toString());
-
-      if(response.statusCode == 200) {
-        Navigator.of(context).pop();
-      } else {
-        //_errorMsgKey.currentState.setErrorMsg(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']);
-        debugPrint(responseMap.toString());
-      }
-    });
-  }
 
   String _validateEmail(String value) {
     if(value.isEmpty) {
@@ -119,6 +65,7 @@ class _MainViewState extends State<MainView> {
   Widget build(BuildContext context) {
     final isDesktop = isDisplayDesktop(context);
     final desktopMaxWidth = 400.0;
+    SignUpRequest req = new SignUpRequest();
 
     return Column(
       children: [
@@ -140,7 +87,7 @@ class _MainViewState extends State<MainView> {
                         labelText: 'Email *',
                         icon: Icons.email,
                         onSaved: (value) {
-                          member.email = value;
+                          req.email = value;
                         },
                         validator: _validateEmail,
                       ),
@@ -149,7 +96,7 @@ class _MainViewState extends State<MainView> {
                         labelText: 'Name *',
                         icon: Icons.people,
                         onSaved: (value) {
-                          member.name = value;
+                          req.name = value;
                         },
                         validator: _validateName,
                       ),
@@ -159,7 +106,7 @@ class _MainViewState extends State<MainView> {
                         labelText: 'Password *',
                         helperText: '8자리 이상 12자리 이하',
                         onSaved: (value) {
-                          member.password = value;
+                          req.password = value;
                         },
                       ),
                       TextField(
@@ -186,7 +133,8 @@ class _MainViewState extends State<MainView> {
                                 onPressed: () {
                                   if(_formKey.currentState.validate()) {
                                     _formKey.currentState.save();
-                                    _signUp(context);
+                                    final auth = AuthProvider.of(context).auth;
+                                    auth.signUp(req);
                                   }
                                 },
                               ),

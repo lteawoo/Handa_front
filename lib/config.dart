@@ -1,36 +1,28 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-class ConfigItem {
-  String key;
-  String value;
+class Config {
+  const Config({
+    Map<String, dynamic> configMap,
+  }) : _configMap = configMap;
+  final Map<String, dynamic> _configMap;
 
-  ConfigItem({
-    this.key,
-    this.value,
-  });
-
-  factory ConfigItem.fromJson(Map<String, dynamic> json) {
-    return ConfigItem(
-      key: json['key'],
-      value: json['value'],
-    );
+  String get(String key)  {
+    if(_configMap == null) {
+      return null;
+    }
+    return _configMap[key];
   }
 }
 
 class ConfigLoader {
-  static Future<Map<String, dynamic>> load() async {
+  Future<Config> init() async {
     final String data = await rootBundle.loadString('assets/config.json');
-    final Map<String, dynamic> parsed = json.decode(data);
+    debugPrint(data);
+    Config config = new Config(configMap: json.decode(data));
 
-    return parsed;
-  }
-
-  static Future<String> get(String key) async {
-    final String data = await rootBundle.loadString('assets/config.json');
-    final Map<String, dynamic> parsed = json.decode(data);
-
-    return parsed[key];
+    return config;
   }
 }
