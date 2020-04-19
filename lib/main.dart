@@ -8,7 +8,7 @@ import 'auth/auth.dart';
 import 'config.dart';
 
 void main() {
-  //WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(StarterApp());
 }
 
