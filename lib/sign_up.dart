@@ -36,6 +36,18 @@ class _MainViewState extends State<MainView> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<FormFieldState> _passwordFieldKey = GlobalKey<FormFieldState>();
 
+  void _onLoading() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Center(
+          child: new CircularProgressIndicator(),
+        );
+      }
+    );
+  }
+
   String _validateEmail(String value) {
     if(value.isEmpty) {
       return 'Email is required.';
@@ -133,8 +145,26 @@ class _MainViewState extends State<MainView> {
                                 onPressed: () {
                                   if(_formKey.currentState.validate()) {
                                     _formKey.currentState.save();
+                                    _onLoading();
+
+                                    //todo auth error처리 어떻게할지..
                                     final auth = AuthProvider.of(context).auth;
-                                    auth.signUp(req);
+                                    auth.signUp(req)
+                                        .then((f) {
+                                          if(f) {
+                                            Navigator.of(context).pop();
+                                          } else {
+                                            Scaffold.of(context).showSnackBar(SnackBar(
+                                              content: Text('다른 정보로 시도해 주세요'),
+                                            ));
+                                          }
+                                        })
+                                        .catchError((error) {
+                                          Scaffold.of(context).showSnackBar(SnackBar(
+                                            content: Text('잠시 후 다시 시도해 주세요.'),
+                                          ));
+                                        })
+                                        .whenComplete(() => Navigator.of(context).pop());
                                   }
                                 },
                               ),

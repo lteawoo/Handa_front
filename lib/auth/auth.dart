@@ -26,7 +26,8 @@ class Auth {
       body: body,
     ).catchError((error) {
       debugPrint(error.toString());
-      throw error;
+      //throw error;
+      return error;
     });
     Map responseMap = jsonDecode(response.body);
     debugPrint(response.statusCode.toString());
