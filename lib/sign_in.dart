@@ -2,9 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:handa/auth/auth.dart';
 import 'package:handa/layout/adaptive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+
+import 'auth/sign_in_request.dart';
 
 class SignIn extends StatefulWidget {
   @override
@@ -56,47 +59,6 @@ class _MainViewState extends State<MainView> {
     return null;
   }
 
-  void _signIn(BuildContext context) async{
-    if(!_formKey.currentState.validate()) {
-      return;
-    }
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String username = member.email;
-    String password = member.password;
-    String uri = "http://localhost:8080/oauth/token?grant_type=password&username=$username&password=$password";
-    String clientId = "taeu_client";
-    String clientPw = "taeu_secret";
-    String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
-    debugPrint(authorization);
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Authorization': authorization,
-      },
-    ).catchError((error) {
-      Scaffold.of(context).hideCurrentSnackBar();
-      Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text(error.toString()),
-      ));
-      throw error;
-    });
-
-    Map responseMap = jsonDecode(response.body);
-    debugPrint(response.statusCode.toString());
-
-    if(response.statusCode == 200) {
-      prefs.setString('access_token', responseMap['access_token']);
-
-      Navigator.of(context).pushReplacementNamed('/home');
-    } else {
-      Scaffold.of(context).hideCurrentSnackBar();
-      Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']),
-      ));
-      debugPrint(responseMap.toString());
-    }
-  }
   void _signUp(BuildContext context) {
     Navigator.of(context).pushNamed('/sign_up');
   }
@@ -105,6 +67,7 @@ class _MainViewState extends State<MainView> {
   Widget build(BuildContext context) {
     final isDesktop = isDisplayDesktop(context);
     final desktopMaxWidth = 400.0;
+    final SignInRequest req = new SignInRequest();
 
     return Column(
         children: [
@@ -140,7 +103,7 @@ class _MainViewState extends State<MainView> {
                       maxWidth: isDesktop ? desktopMaxWidth : null,
                       labelText: 'Email',
                       onSaved: (String value) {
-                        member.email = value;
+                        req.email = value;
                       },
                       validator: _validateEmail,
                     ),
@@ -149,7 +112,7 @@ class _MainViewState extends State<MainView> {
                         labelText: 'Password',
                         validator: _validatePassword,
                         onSaved: (String value) {
-                          member.password = value;
+                          req.password = value;
                         }
                     ),
                     _LoginButton(
@@ -158,7 +121,27 @@ class _MainViewState extends State<MainView> {
                           final form = _formKey.currentState;
                           if(form.validate()) {
                             form.save();
-                            _signIn(context);
+                            _onLoading();
+
+                            final auth = AuthProvider.of(context).auth;
+                            auth.signIn(req)
+                                .then((response) {
+                                  if(response.statusCode == 200) {
+                                    Navigator.of(context).pushNamedAndRemoveUntil('/home', (Route<dynamic> route) => false);
+                                  } else {
+                                    Map<String, dynamic> data = jsonDecode(response.body);
+                                    Scaffold.of(context).showSnackBar(SnackBar(
+                                      content: Text(data['error_description']),
+                                    ));
+                                    Navigator.of(context).pop();
+                                  }
+                                })
+                                .catchError((error) {
+                                  Scaffold.of(context).showSnackBar(SnackBar(
+                                    content: Text('잠시 후 다시 시도해 주세요.'),
+                                  ));
+                                  Navigator.of(context).pop();
+                                });
                           }
                         }
                     ),

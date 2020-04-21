@@ -1,8 +1,8 @@
-class SignUpRequest {
+class SignInRequest {
   String email;
   String password;
 
-  SignUpRequest({
+  SignInRequest({
     this.email,
     this.password,
   });

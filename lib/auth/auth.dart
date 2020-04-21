@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:handa/auth/sign_in_request.dart';
 import 'package:handa/auth/sign_up_request.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config.dart';
 
 class Auth {
@@ -26,9 +28,41 @@ class Auth {
       body: body,
     ).catchError((error) {
       debugPrint(error.toString());
-      //throw error;
+
       return error;
     });
+
+    return response;
+  }
+
+  Future<Response> signIn(SignInRequest req) async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String username = req.email;
+    String password = req.password;
+    String uri = config.get('server_address') + "/oauth/token?grant_type=password&username=$username&password=$password";
+    String clientId = "taeu_client";
+    String clientPw = "taeu_secret";
+    String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
+    debugPrint(authorization);
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': authorization,
+      },
+    ).catchError((error) {
+      debugPrint('error: ' + error.toString());
+
+      return error;
+    });
+
+    Map responseMap = jsonDecode(response.body);
+
+    debugPrint('status'+ response.statusCode.toString());
+
+    if(response.statusCode == 200) {
+      prefs.setString('access_token', responseMap['access_token']);
+    }
 
     return response;
   }

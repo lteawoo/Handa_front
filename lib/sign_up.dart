@@ -74,7 +74,7 @@ class _MainViewState extends State<MainView> {
   Widget build(BuildContext context) {
     final isDesktop = isDisplayDesktop(context);
     final desktopMaxWidth = 400.0;
-    SignUpRequest req = new SignUpRequest();
+    final SignUpRequest req = new SignUpRequest();
 
     return Column(
       children: [
