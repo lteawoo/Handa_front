@@ -3,31 +3,8 @@ import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:handa/layout/adaptive.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-
-import 'config.dart';
-
-class Member {
-  String email;
-  String password;
-
-  Member({
-    this.email,
-    this.password,
-  });
-
-  Map<String, dynamic> toJson() =>
-    {
-      'email': {
-        'value': email,
-      },
-      'password': {
-        'value': password,
-      },
-    };
-}
 
 class SignIn extends StatefulWidget {
   @override
@@ -39,15 +16,31 @@ class _SignInState extends State<SignIn> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: _MainView(),
+        child: MainView(),
       )
     );
   }
 }
 
-class _MainView extends StatelessWidget {
-  final Member member = Member();
+class MainView extends StatefulWidget {
+  @override
+  State<MainView> createState() => _MainViewState();
+}
+
+class _MainViewState extends State<MainView> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  void _onLoading() {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Center(
+            child: new CircularProgressIndicator(),
+          );
+        }
+    );
+  }
 
   String _validateEmail(String value) {
     if(value.isEmpty) {

@@ -73,7 +73,10 @@ class Home extends StatelessWidget {
           initialRoute: '/sign_in',
           routes: {
             '/home': (BuildContext context) => Todo(),
-            '/sign_in': (BuildContext context) => SignIn(),
+            '/sign_in': (BuildContext context) => AuthProvider(
+              auth: Auth(config: config),
+              child: SignIn(),
+            ),
             '/sign_up': (BuildContext context) => AuthProvider(
               auth: Auth(config: config),
               child: SignUp(),
