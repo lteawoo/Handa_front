@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:handa/auth/sign_up_request.dart';
-import 'package:handa/sign_up.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import '../config.dart';
@@ -30,16 +29,8 @@ class Auth {
       //throw error;
       return error;
     });
-    /*Map responseMap = jsonDecode(response.body);
-    debugPrint(response.statusCode.toString());*/
+
     return response;
-    /*if(response.statusCode == 200) {
-     return true;
-    } else {
-      //_errorMsgKey.currentState.setErrorMsg(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']);
-      debugPrint(responseMap.toString());
-      return false;
-    }*/
   }
 }
 
