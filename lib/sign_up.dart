@@ -5,11 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:handa/auth/sign_up_request.dart';
 import 'package:handa/layout/adaptive.dart';
-import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 
 import 'auth/auth.dart';
-import 'config.dart';
 
 class SignUp extends StatefulWidget {
   @override
@@ -136,7 +133,7 @@ class _MainViewState extends State<MainView> {
                               RaisedButton(
                                 child: Text('Back'),
                                 onPressed: () {
-                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pushNamedAndRemoveUntil('/sign_in', (Route<dynamic> route) => false);
                                 },
                               ),
                               Expanded(child:SizedBox.shrink()),
@@ -147,24 +144,25 @@ class _MainViewState extends State<MainView> {
                                     _formKey.currentState.save();
                                     _onLoading();
 
-                                    //todo auth error처리 어떻게할지..
                                     final auth = AuthProvider.of(context).auth;
                                     auth.signUp(req)
-                                        .then((f) {
-                                          if(f) {
-                                            Navigator.of(context).pop();
+                                        .then((response) {
+                                          if(response.statusCode == 200) {
+                                            Navigator.of(context).pushNamedAndRemoveUntil('/sign_in', (Route<dynamic> route) => false);
                                           } else {
+                                            Map<String, dynamic> data = jsonDecode(response.body);
                                             Scaffold.of(context).showSnackBar(SnackBar(
-                                              content: Text('다른 정보로 시도해 주세요'),
+                                              content: Text(data['message']),
                                             ));
+                                            Navigator.of(context).pop();
                                           }
                                         })
                                         .catchError((error) {
                                           Scaffold.of(context).showSnackBar(SnackBar(
                                             content: Text('잠시 후 다시 시도해 주세요.'),
                                           ));
-                                        })
-                                        .whenComplete(() => Navigator.of(context).pop());
+                                          Navigator.of(context).pop();
+                                        });
                                   }
                                 },
                               ),

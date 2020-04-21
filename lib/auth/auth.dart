@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:handa/auth/sign_up_request.dart';
 import 'package:handa/sign_up.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
 import '../config.dart';
 
 class Auth {
@@ -12,12 +13,12 @@ class Auth {
   });
   final Config config;
 
-  Future<bool> signUp(SignUpRequest req) async {
+  Future<Response> signUp(SignUpRequest req) async {
     String uri = config.get('server_address') + "/member/signup";
     String body = json.encode(req);
     debugPrint(body);
 
-    final response = await http.post(
+    final Response response = await http.post(
       uri,
       headers: {
         'Content-Type': "application/json;charset=UTF-8",
@@ -29,16 +30,16 @@ class Auth {
       //throw error;
       return error;
     });
-    Map responseMap = jsonDecode(response.body);
-    debugPrint(response.statusCode.toString());
-
-    if(response.statusCode == 200) {
+    /*Map responseMap = jsonDecode(response.body);
+    debugPrint(response.statusCode.toString());*/
+    return response;
+    /*if(response.statusCode == 200) {
      return true;
     } else {
       //_errorMsgKey.currentState.setErrorMsg(response.statusCode.toString() + ', ' + responseMap['error'] + ': ' + responseMap['error_description']);
       debugPrint(responseMap.toString());
       return false;
-    }
+    }*/
   }
 }
 
