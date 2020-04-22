@@ -133,7 +133,8 @@ class _MainViewState extends State<MainView> {
                               RaisedButton(
                                 child: Text('Back'),
                                 onPressed: () {
-                                  Navigator.of(context).pushNamedAndRemoveUntil('/sign_in', (Route<dynamic> route) => false);
+                                  //Navigator.of(context).pushNamedAndRemoveUntil('/sign_in', (Route<dynamic> route) => false);
+                                  Navigator.of(context).pop();
                                 },
                               ),
                               Expanded(child:SizedBox.shrink()),

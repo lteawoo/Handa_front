@@ -54,6 +54,7 @@ class _TodoState extends State<Todo> {
 
   @override
   void dispose() {
+    debugPrint('dispose');
     started = false;
     super.dispose();
   }
@@ -274,48 +275,54 @@ class _TodoState extends State<Todo> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+
+        return false;
+      },
+      child: Scaffold(
         body: SafeArea(
-        child: Column(
-          children: [
-            _TopBar(),
-            Expanded(
-              child: TodoItemList(
-                items: items,
-                onDeletePressed: _removeTodoItem,
-                onCheckBoxPressed: _doneTodoItem,
-                onReorder: onReorder,
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: Builder(
-        builder: (context) => FloatingActionButton(
-          child: Icon(Icons.add),
-          onPressed: () {
-            _showInputModalBottomSheet(context);
-          },
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-          color: Theme.of(context).primaryColor,
-          shape: const CircularNotchedRectangle(),
-          child: IconTheme(
-            data: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
-            child: Row(
-              children: [
-                IconButton(
-                    tooltip: '메뉴',
-                    icon: const Icon(Icons.menu),
-                    onPressed: () {
-                      _showMenuModalBottomSheet(context);
-                    }
+          child: Column(
+            children: [
+              _TopBar(),
+              Expanded(
+                child: TodoItemList(
+                  items: items,
+                  onDeletePressed: _removeTodoItem,
+                  onCheckBoxPressed: _doneTodoItem,
+                  onReorder: onReorder,
                 ),
-              ],
-            ),
-          )
+              ),
+            ],
+          ),
+        ),
+        floatingActionButton: Builder(
+          builder: (context) => FloatingActionButton(
+            child: Icon(Icons.add),
+            onPressed: () {
+              _showInputModalBottomSheet(context);
+            },
+          ),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: BottomAppBar(
+            color: Theme.of(context).primaryColor,
+            shape: const CircularNotchedRectangle(),
+            child: IconTheme(
+              data: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
+              child: Row(
+                children: [
+                  IconButton(
+                      tooltip: '메뉴',
+                      icon: const Icon(Icons.menu),
+                      onPressed: () {
+                        _showMenuModalBottomSheet(context);
+                      }
+                  ),
+                ],
+              ),
+            )
+        ),
       ),
     );
   }
@@ -339,7 +346,7 @@ class _TodoState extends State<Todo> {
                 onTap:(() {
                   _removeAccessTokenFromStorage().then((bool) {
                     if(bool) {
-                      Navigator.pushNamedAndRemoveUntil(context, '/sign_in', ModalRoute.withName('/home'));
+                      Navigator.pushNamedAndRemoveUntil(context, '/sign_in', (Route<dynamic> route) => false);
                     }
                   });
                 }),
