@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:handa/config.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -35,6 +36,11 @@ class TodoItem {
 }
 
 class Todo extends StatefulWidget {
+  const Todo({
+    this.config,
+  });
+  final Config config;
+
   @override
   _TodoState createState() => _TodoState();
 }
@@ -102,18 +108,20 @@ class _TodoState extends State<Todo> {
       return null;
     }
     debugPrint('token : ' + accessToken);
-
-    final response = await http.get(
-      'http://localhost:8080/api/item/list',
-      headers: {
-        'Authorization' : 'Bearer ' + accessToken,
-        'Accept': "application/json;charset=UTF-8",
-      },
-    ).catchError((error) {
-      debugPrint(error);
-      throw error;
-    });
-    debugPrint(response.statusCode.toString());
+    dynamic response = null;
+    try {
+      response = await http.get(
+        widget.config.get('server_address') + '/api/item/list',
+        headers: {
+          'Authorization' : 'Bearer ' + accessToken,
+          'Accept': "application/json;charset=UTF-8",
+        },
+      );
+      debugPrint(response.headers.toString());
+      debugPrint(response.statusCode.toString());
+    } catch(e) {
+      debugPrint(e.toString());
+    }
 
     if(response.statusCode == 200) {
       final parsed = jsonDecode(response.body).cast<Map<String, dynamic>>();
@@ -138,7 +146,7 @@ class _TodoState extends State<Todo> {
       return;
     }
     final response = await http.post(
-      'http://localhost:8080/api/item/write',
+      widget.config.get('server_address') + '/api/item/write',
       headers: {
         'Authorization' : 'Bearer ' + accessToken,
         'Content-Type': "application/json;charset=UTF-8",
@@ -167,7 +175,7 @@ class _TodoState extends State<Todo> {
       return;
     }
     final response = await http.delete(
-      'http://localhost:8080/api/item/delete/${todoItem.id}',
+      widget.config.get('server_address') + '/api/item/delete/${todoItem.id}',
       headers: {
         'Authorization' : 'Bearer ' + accessToken,
         'Accept': "application/json;charset=UTF-8",
@@ -190,7 +198,7 @@ class _TodoState extends State<Todo> {
       return null;
     }
     final response = await http.post(
-      'http://localhost:8080/api/item/modifyDone/${todoItem.id}',
+      widget.config.get('server_address') + '/api/item/modifyDone/${todoItem.id}',
       headers: {
         'Authorization' : 'Bearer ' + accessToken,
         'Content-Type': "application/json;charset=UTF-8",
@@ -218,7 +226,7 @@ class _TodoState extends State<Todo> {
     }
 
     final response = await http.post(
-      'http://localhost:8080/api/item/modifyPosition/${todoItem.id}',
+      widget.config.get('server_address') + '/api/item/modifyPosition/${todoItem.id}',
       headers: {
         'Authorization': 'Bearer ' + accessToken,
         'Content-Type': "application/json;charset=UTF-8",
