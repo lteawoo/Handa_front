@@ -66,7 +66,7 @@ class _TodoState extends State<Todo> {
   }
 
   void _swapList() {
-    //todo progress widget 구현해야함
+    //todo progress widget 구현해야함.
     Future<List<TodoItem>> f = _fetchItems();
 
     f.then((list) {
