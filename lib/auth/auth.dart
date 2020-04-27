@@ -14,6 +14,53 @@ class Auth {
   });
   final Config config;
 
+  Future<String> _getAccessTokenFromStorage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
+  }
+
+  Future<bool> _removeAccessTokenFromStorage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.remove('access_token');
+  }
+
+  Future<String> _getRefreshTokenFromStorage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('refresh_token');
+  }
+
+  void refreshToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String refreshToken = await _getRefreshTokenFromStorage();
+    String uri = config.get('server_address') + "/oauth/token?grant_type=refresh_token&refresh_token=" + refreshToken;
+    String clientId = "taeu_client";
+    String clientPw = "taeu_secret";
+    String authorization = "Basic " + base64Encode(utf8.encode('$clientId:$clientPw'));
+    debugPrint(authorization);
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': authorization,
+      },
+    ).catchError((error) {
+      debugPrint('error: ' + error.toString());
+
+      return error;
+    });
+
+    Map responseMap = jsonDecode(response.body);
+
+    debugPrint('status'+ response.statusCode.toString());
+
+    if(response.statusCode == 200) {
+      prefs.setString('access_token', responseMap['access_token']);
+      prefs.setString('refresh_token', responseMap['refresh_token']);
+    }
+
+    //return response;
+  }
+
   Future<Response> signUp(SignUpRequest req) async {
     String uri = config.get('server_address') + "/member/signup";
     String body = json.encode(req);
@@ -49,11 +96,11 @@ class Auth {
       uri,
       headers: {
         'Authorization': authorization,
-      },
+    },
     ).catchError((error) {
-      debugPrint('error: ' + error.toString());
+    debugPrint('error: ' + error.toString());
 
-      return error;
+    return error;
     });
 
     Map responseMap = jsonDecode(response.body);
@@ -62,6 +109,7 @@ class Auth {
 
     if(response.statusCode == 200) {
       prefs.setString('access_token', responseMap['access_token']);
+      prefs.setString('refresh_token', responseMap['refresh_token']);
     }
 
     return response;

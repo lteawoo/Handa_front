@@ -7,6 +7,8 @@ import 'package:handa/config.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'auth/auth.dart';
+
 class TodoItem {
   int id;
   String content;
@@ -63,6 +65,11 @@ class _TodoState extends State<Todo> {
     debugPrint('dispose');
     started = false;
     super.dispose();
+  }
+
+  void refreshTest() {
+    final auth  = AuthProvider.of(context).auth;
+    auth.refreshToken();
   }
 
   void _swapList() {
@@ -357,6 +364,13 @@ class _TodoState extends State<Todo> {
                       Navigator.pushNamedAndRemoveUntil(context, '/sign_in', (Route<dynamic> route) => false);
                     }
                   });
+                }),
+              ),
+              ListTile(
+                enabled: true,
+                title: Text('refreshToken'),
+                onTap:(() {
+                  refreshTest();
                 }),
               ),
             ],

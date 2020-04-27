@@ -72,8 +72,9 @@ class Home extends StatelessWidget {
           title: 'Handa',
           initialRoute: '/sign_in',
           routes: {
-            '/home': (BuildContext context) => Todo(
-              config: config,
+            '/home': (BuildContext context) => AuthProvider(
+              auth: Auth(config: config),
+              child: Todo(config: config),
             ),
             '/sign_in': (BuildContext context) => AuthProvider(
               auth: Auth(config: config),
