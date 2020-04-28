@@ -50,6 +50,7 @@ class Todo extends StatefulWidget {
 class _TodoState extends State<Todo> {
   final List<TodoItem> items = [];
   bool started = true;
+  Auth auth;
 
   @override
   void initState() {
@@ -58,6 +59,8 @@ class _TodoState extends State<Todo> {
 
     _swapList();
     _startTimer();
+
+    auth = AuthProvider.of(context).auth;
   }
 
   @override
@@ -99,18 +102,8 @@ class _TodoState extends State<Todo> {
     });
   }
 
-  Future<String> _getAccessTokenFromStorage() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('access_token');
-  }
-
-  Future<bool> _removeAccessTokenFromStorage() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.remove('access_token');
-  }
-
   Future<List<TodoItem>> _fetchItems() async {
-    String accessToken = await _getAccessTokenFromStorage();
+    String accessToken = await auth.getAccessTokenFromStorage();
     if(accessToken == null) {
       return null;
     }
@@ -148,7 +141,7 @@ class _TodoState extends State<Todo> {
   }
 
   void _addTodoItem(TodoItem todoItem) async {
-    String accessToken = await _getAccessTokenFromStorage();
+    String accessToken = await auth.getAccessTokenFromStorage();
     if(accessToken == null) {
       return;
     }
@@ -177,7 +170,7 @@ class _TodoState extends State<Todo> {
   }
   void _removeTodoItem(TodoItem todoItem) async {
     debugPrint("delete");
-    String accessToken = await _getAccessTokenFromStorage();
+    String accessToken = await auth.getAccessTokenFromStorage();
     if(accessToken == null) {
       return;
     }
@@ -200,7 +193,7 @@ class _TodoState extends State<Todo> {
 
   Future<TodoItem> _doneTodoItem(TodoItem todoItem, bool val) async {
     debugPrint("done");
-    String accessToken = await _getAccessTokenFromStorage();
+    String accessToken = await auth.getAccessTokenFromStorage();
     if(accessToken == null) {
       return null;
     }
@@ -227,7 +220,7 @@ class _TodoState extends State<Todo> {
   }
 
   void _changePosition(TodoItem todoItem) async {
-    String accessToken = await _getAccessTokenFromStorage();
+    String accessToken = await auth.getAccessTokenFromStorage();
     if (accessToken == null) {
       return;
     }
@@ -359,7 +352,7 @@ class _TodoState extends State<Todo> {
                 enabled: true,
                 title: Text('SIGN OUT'),
                 onTap:(() {
-                  _removeAccessTokenFromStorage().then((bool) {
+                  auth.removeAccessTokenFromStorage().then((bool) {
                     if(bool) {
                       Navigator.pushNamedAndRemoveUntil(context, '/sign_in', (Route<dynamic> route) => false);
                     }

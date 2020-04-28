@@ -14,24 +14,24 @@ class Auth {
   });
   final Config config;
 
-  Future<String> _getAccessTokenFromStorage() async {
+  Future<String> getAccessTokenFromStorage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
   }
 
-  Future<bool> _removeAccessTokenFromStorage() async {
+  Future<bool> removeAccessTokenFromStorage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.remove('access_token');
   }
 
-  Future<String> _getRefreshTokenFromStorage() async {
+  Future<String> getRefreshTokenFromStorage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('refresh_token');
   }
 
   void refreshToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String refreshToken = await _getRefreshTokenFromStorage();
+    String refreshToken = await getRefreshTokenFromStorage();
     String uri = config.get('server_address') + "/oauth/token?grant_type=refresh_token&refresh_token=" + refreshToken;
     String clientId = "taeu_client";
     String clientPw = "taeu_secret";
