@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:handa/config.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auth/auth.dart';
 
@@ -49,18 +48,16 @@ class Todo extends StatefulWidget {
 
 class _TodoState extends State<Todo> {
   final List<TodoItem> items = [];
-  bool started = true;
-  Auth auth;
+  bool started = false;
 
   @override
   void initState() {
     debugPrint('init');
     super.initState();
 
+    started = true;
     _swapList();
     _startTimer();
-
-    auth = AuthProvider.of(context).auth;
   }
 
   @override
@@ -76,7 +73,6 @@ class _TodoState extends State<Todo> {
   }
 
   void _swapList() {
-    //todo progress widget 구현해야함.
     Future<List<TodoItem>> f = _fetchItems();
 
     f.then((list) {
@@ -103,6 +99,7 @@ class _TodoState extends State<Todo> {
   }
 
   Future<List<TodoItem>> _fetchItems() async {
+    final auth = AuthProvider.of(context).auth;
     String accessToken = await auth.getAccessTokenFromStorage();
     if(accessToken == null) {
       return null;
@@ -141,6 +138,7 @@ class _TodoState extends State<Todo> {
   }
 
   void _addTodoItem(TodoItem todoItem) async {
+    final auth = AuthProvider.of(context).auth;
     String accessToken = await auth.getAccessTokenFromStorage();
     if(accessToken == null) {
       return;
@@ -170,6 +168,7 @@ class _TodoState extends State<Todo> {
   }
   void _removeTodoItem(TodoItem todoItem) async {
     debugPrint("delete");
+    final auth = AuthProvider.of(context).auth;
     String accessToken = await auth.getAccessTokenFromStorage();
     if(accessToken == null) {
       return;
@@ -193,6 +192,7 @@ class _TodoState extends State<Todo> {
 
   Future<TodoItem> _doneTodoItem(TodoItem todoItem, bool val) async {
     debugPrint("done");
+    final auth = AuthProvider.of(context).auth;
     String accessToken = await auth.getAccessTokenFromStorage();
     if(accessToken == null) {
       return null;
@@ -220,6 +220,7 @@ class _TodoState extends State<Todo> {
   }
 
   void _changePosition(TodoItem todoItem) async {
+    final auth = AuthProvider.of(context).auth;
     String accessToken = await auth.getAccessTokenFromStorage();
     if (accessToken == null) {
       return;
@@ -336,6 +337,8 @@ class _TodoState extends State<Todo> {
   }
 
   void _showMenuModalBottomSheet(BuildContext context) {
+    final auth = AuthProvider.of(context).auth;
+
     showModalBottomSheet<void>(
       enableDrag: true,
       shape: RoundedRectangleBorder(
