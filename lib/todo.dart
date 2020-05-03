@@ -381,15 +381,12 @@ class _TodoState extends State<Todo> {
 
     submit(String where) {
       final String input = _textEditingController.text.trim();
-      debugPrint('$where, request submit, you typed $input');
 
       if(input == '') {
         return;
       }
 
       _addTodoItem(new TodoItem(content: input, done: false));
-
-      debugPrint('submitted, you typed $input');
     }
 
     showModalBottomSheet<void>(
