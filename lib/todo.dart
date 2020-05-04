@@ -191,7 +191,6 @@ class _TodoState extends State<Todo> {
   }
 
   Future<TodoItem> _doneTodoItem(TodoItem todoItem, bool val) async {
-    debugPrint("done");
     final auth = AuthProvider.of(context).auth;
     String accessToken = await auth.getAccessTokenFromStorage();
     if(accessToken == null) {
